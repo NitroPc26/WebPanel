@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance - SMM WebPanel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-primary text-primary">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>SMM WebPanel</h2>
+        </div>
+        <nav>
+            <a href="/dashboard.html" class="sidebar-item">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/orders.html" class="sidebar-item">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+            </a>
+            <a href="/services.html" class="sidebar-item">
+                <i class="fas fa-list"></i>
+                <span>Services</span>
+            </a>
+            <a href="/store.html" class="sidebar-item">
+                <i class="fas fa-store"></i>
+                <span>Store</span>
+            </a>
+            <a href="/balance.html" class="sidebar-item active">
+                <i class="fas fa-wallet"></i>
+                <span>Balance</span>
+            </a>
+            <a href="/tickets.html" class="sidebar-item">
+                <i class="fas fa-ticket-alt"></i>
+                <span>Support</span>
+            </a>
+            <a href="/customer-service.html" class="sidebar-item">
+                <i class="fas fa-headset"></i>
+                <span>Customer Service</span>
+            </a>
+            <a href="/profile.html" class="sidebar-item">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            <a href="#" onclick="logout(); return false;" class="sidebar-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button onclick="toggleSidebar()" class="mobile-menu-btn" style="display: none; position: fixed; top: 20px; left: 20px; z-index: 101; background: var(--primary-color); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; box-shadow: var(--shadow-lg);">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">Balance</h1>
+        </div>
+
+        <!-- Balance Card -->
+        <div class="card mb-8">
+            <div class="text-center">
+                <h3 class="text-lg font-semibold mb-4">Current Balance</h3>
+                <div class="text-5xl font-bold text-primary mb-6" id="current-balance">$0.00</div>
+                <button onclick="openDepositModal()" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Add Funds
+                </button>
+            </div>
+        </div>
+
+        <!-- Transactions -->
+        <div class="card">
+            <h3 class="text-lg font-semibold mb-4">Transaction History</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Balance Before</th>
+                            <th>Balance After</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-tbody">
+                        <tr>
+                            <td colspan="6" class="text-center text-secondary">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="transactions-pagination" class="mt-6 flex justify-center gap-2"></div>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div id="deposit-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Add Funds</h2>
+                <button onclick="closeDepositModal()" class="text-secondary hover:text-primary">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <form id="deposit-form" class="space-y-4">
+                <div>
+                    <label class="form-label">Amount</label>
+                    <input type="number" id="deposit-amount" class="form-input" required min="5" step="0.01" placeholder="5.00">
+                    <p class="text-xs text-secondary mt-1">Minimum: $5.00</p>
+                </div>
+                <div>
+                    <label class="form-label">Payment Method</label>
+                    <select id="deposit-method" class="form-input" required>
+                        <option value="manual">Manual Payment</option>
+                        <option value="paypal">PayPal</option>
+                        <option value="stripe">Stripe</option>
+                        <option value="crypto">Cryptocurrency</option>
+                    </select>
+                </div>
+                <div class="flex gap-4">
+                    <button type="submit" class="btn btn-primary flex-1">
+                        <i class="fas fa-check"></i>
+                        Add Funds
+                    </button>
+                    <button type="button" onclick="closeDepositModal()" class="btn btn-secondary">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        let currentPage = 1;
+
+        // Mock transactions
+        const mockTransactions = [
+            { type: "deposit", amount: 100.00, balance_before: 0, balance_after: 100.00, description: "Deposit via PayPal", created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString() },
+            { type: "order", amount: -15.99, balance_before: 100.00, balance_after: 84.01, description: "Order #1001 - Instagram Followers", created_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString() },
+            { type: "deposit", amount: 200.00, balance_before: 84.01, balance_after: 284.01, description: "Deposit via Stripe", created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
+            { type: "order", amount: -25.50, balance_before: 284.01, balance_after: 258.51, description: "Order #1002 - YouTube Views", created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
+            { type: "order", amount: -19.99, balance_before: 258.51, balance_after: 238.52, description: "Order #1003 - Twitter Followers", created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+            { type: "refund", amount: 15.99, balance_before: 238.52, balance_after: 254.51, description: "Refund for Order #1001", created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() }
+        ];
+
+        async function loadBalance() {
+            try {
+                const response = await apiRequest('/api/users/profile');
+                if (response && response.success) {
+                    document.getElementById('current-balance').textContent = formatCurrency(response.user.balance || 0);
+                } else {
+                    // Use mock balance
+                    document.getElementById('current-balance').textContent = formatCurrency(1250.75);
+                }
+            } catch (error) {
+                console.error('Error loading balance:', error);
+                // Use mock balance
+                document.getElementById('current-balance').textContent = formatCurrency(1250.75);
+            }
+        }
+
+        async function loadTransactions(page = 1) {
+            currentPage = page;
+            try {
+                const response = await apiRequest(`/api/transactions?page=${page}&limit=20`);
+                if (response && response.success) {
+                    const transactions = response.transactions;
+                    const tbody = document.getElementById('transactions-tbody');
+
+                    if (transactions.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary">No transactions yet</td></tr>';
+                    } else {
+                        tbody.innerHTML = transactions.map(t => `
+                            <tr>
+                                <td>${formatDate(t.created_at)}</td>
+                                <td><span class="badge ${getStatusBadgeClass(t.type)}">${formatStatus(t.type)}</span></td>
+                                <td class="${t.amount >= 0 ? 'text-success-color' : 'text-danger-color'}">
+                                    ${t.amount >= 0 ? '+' : ''}${formatCurrency(t.amount)}
+                                </td>
+                                <td>${formatCurrency(t.balance_before)}</td>
+                                <td>${formatCurrency(t.balance_after)}</td>
+                                <td>${t.description || '-'}</td>
+                            </tr>
+                        `).join('');
+                    }
+
+                    // Pagination
+                    if (response.pagination) {
+                        const pagination = response.pagination;
+                        const paginationEl = document.getElementById('transactions-pagination');
+                        let paginationHTML = '';
+
+                        if (pagination.page > 1) {
+                            paginationHTML += `<button onclick="loadTransactions(${pagination.page - 1})" class="btn btn-secondary">Previous</button>`;
+                        }
+
+                        paginationHTML += `<span class="px-4 py-2">Page ${pagination.page} of ${pagination.pages}</span>`;
+
+                        if (pagination.page < pagination.pages) {
+                            paginationHTML += `<button onclick="loadTransactions(${pagination.page + 1})" class="btn btn-secondary">Next</button>`;
+                        }
+
+                        paginationEl.innerHTML = paginationHTML;
+                    }
+                } else {
+                    // Use mock data
+                    const tbody = document.getElementById('transactions-tbody');
+                    tbody.innerHTML = mockTransactions.map(t => `
+                        <tr>
+                            <td>${formatDate(t.created_at)}</td>
+                            <td><span class="badge ${getStatusBadgeClass(t.type)}">${formatStatus(t.type)}</span></td>
+                            <td class="${t.amount >= 0 ? 'text-success-color' : 'text-danger-color'}">
+                                ${t.amount >= 0 ? '+' : ''}${formatCurrency(t.amount)}
+                            </td>
+                            <td>${formatCurrency(t.balance_before)}</td>
+                            <td>${formatCurrency(t.balance_after)}</td>
+                            <td>${t.description || '-'}</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                // Use mock data
+                const tbody = document.getElementById('transactions-tbody');
+                tbody.innerHTML = mockTransactions.map(t => `
+                    <tr>
+                        <td>${formatDate(t.created_at)}</td>
+                        <td><span class="badge ${getStatusBadgeClass(t.type)}">${formatStatus(t.type)}</span></td>
+                        <td class="${t.amount >= 0 ? 'text-success-color' : 'text-danger-color'}">
+                            ${t.amount >= 0 ? '+' : ''}${formatCurrency(t.amount)}
+                        </td>
+                        <td>${formatCurrency(t.balance_before)}</td>
+                        <td>${formatCurrency(t.balance_after)}</td>
+                        <td>${t.description || '-'}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function openDepositModal() {
+            document.getElementById('deposit-modal').classList.remove('hidden');
+        }
+
+        function closeDepositModal() {
+            document.getElementById('deposit-modal').classList.add('hidden');
+            document.getElementById('deposit-form').reset();
+        }
+
+        document.getElementById('deposit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const amount = parseFloat(document.getElementById('deposit-amount').value);
+            const method = document.getElementById('deposit-method').value;
+
+            if (amount < 5) {
+                showNotification('Minimum deposit amount is $5.00', 'error');
+                return;
+            }
+
+            try {
+                const response = await apiRequest('/api/transactions/deposit', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        amount: amount,
+                        payment_method: method
+                    })
+                });
+
+                if (response && response.success) {
+                    showNotification('Funds added successfully!', 'success');
+                    closeDepositModal();
+                    loadBalance();
+                    loadTransactions(1);
+                }
+            } catch (error) {
+                showNotification(error.message || 'Failed to add funds', 'error');
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadBalance();
+            loadTransactions();
+        });
+    </script>
+</body>
+</html>
+

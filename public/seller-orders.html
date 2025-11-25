@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Orders - SMM WebPanel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-primary text-primary">
+    <div class="sidebar" id="sidebar">
+        <div class="p-6 border-b border-color">
+            <h2 class="text-xl font-bold">SMM WebPanel</h2>
+        </div>
+        <nav class="py-4">
+            <a href="/seller-orders.html" class="sidebar-item active">
+                <i class="fas fa-shopping-cart w-5"></i>
+                <span>Orders</span>
+            </a>
+            <a href="/seller-services.html" class="sidebar-item">
+                <i class="fas fa-list w-5"></i>
+                <span>Services</span>
+            </a>
+            <a href="#" onclick="logout(); return false;" class="sidebar-item">
+                <i class="fas fa-sign-out-alt w-5"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content" >
+        <h1 class="text-3xl font-bold mb-8">Order Management</h1>
+
+        <div class="card mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="form-label">Status</label>
+                    <select id="status-filter" class="form-input">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="loadOrders()" class="btn btn-primary w-full">Filter</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Client</th>
+                            <th>Service</th>
+                            <th>Link</th>
+                            <th>Quantity</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-tbody">
+                        <tr><td colspan="7" class="text-center text-secondary">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        // Mock seller orders
+        const mockSellerOrders = [
+            { id: 1001, client_username: "john_doe", service_name: "Instagram Followers", link: "https://instagram.com/user123", quantity: 1000, status: "pending", created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+            { id: 1002, client_username: "jane_smith", service_name: "YouTube Views", link: "https://youtube.com/watch?v=abc123", quantity: 5000, status: "processing", created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
+            { id: 1003, client_username: "mike_wilson", service_name: "Twitter Followers", link: "https://twitter.com/user456", quantity: 2000, status: "in_progress", created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() },
+            { id: 1004, client_username: "sarah_jones", service_name: "TikTok Likes", link: "https://tiktok.com/@user789", quantity: 10000, status: "completed", created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
+            { id: 1005, client_username: "david_brown", service_name: "Facebook Page Likes", link: "https://facebook.com/page123", quantity: 500, status: "pending", created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString() }
+        ];
+
+        async function loadOrders() {
+            try {
+                const status = document.getElementById('status-filter').value;
+                let url = '/api/orders?limit=50';
+                if (status) url += `&status=${status}`;
+
+                const response = await apiRequest(url);
+                if (response && response.success) {
+                    const orders = response.orders;
+                    const tbody = document.getElementById('orders-tbody');
+
+                    if (orders.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary">No orders found</td></tr>';
+                    } else {
+                        tbody.innerHTML = orders.map(order => `
+                            <tr>
+                                <td>#${order.id}</td>
+                                <td>${order.client_username || 'N/A'}</td>
+                                <td>${order.service_name}</td>
+                                <td class="max-w-xs truncate">${order.link}</td>
+                                <td>${order.quantity}</td>
+                                <td><span class="badge ${getStatusBadgeClass(order.status)}">${formatStatus(order.status)}</span></td>
+                                <td>
+                                    ${order.status === 'pending' ? `
+                                        <button onclick="acceptOrder(${order.id})" class="btn btn-success btn-sm">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button onclick="rejectOrder(${order.id})" class="btn btn-danger btn-sm">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    ` : ''}
+                                    ${order.status === 'processing' || order.status === 'in_progress' ? `
+                                        <button onclick="completeOrder(${order.id})" class="btn btn-success btn-sm">
+                                            <i class="fas fa-check-circle"></i>
+                                        </button>
+                                    ` : ''}
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+                } else {
+                    // Use mock data
+                    let filteredOrders = [...mockSellerOrders];
+                    if (status) {
+                        filteredOrders = filteredOrders.filter(o => o.status === status);
+                    }
+                    const tbody = document.getElementById('orders-tbody');
+                    if (filteredOrders.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary">No orders found</td></tr>';
+                    } else {
+                        tbody.innerHTML = filteredOrders.map(order => `
+                            <tr>
+                                <td>#${order.id}</td>
+                                <td>${order.client_username || 'N/A'}</td>
+                                <td>${order.service_name}</td>
+                                <td class="max-w-xs truncate">${order.link}</td>
+                                <td>${order.quantity}</td>
+                                <td><span class="badge ${getStatusBadgeClass(order.status)}">${formatStatus(order.status)}</span></td>
+                                <td>
+                                    ${order.status === 'pending' ? `
+                                        <button onclick="acceptOrder(${order.id})" class="btn btn-success btn-sm">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button onclick="rejectOrder(${order.id})" class="btn btn-danger btn-sm">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    ` : ''}
+                                    ${order.status === 'processing' || order.status === 'in_progress' ? `
+                                        <button onclick="completeOrder(${order.id})" class="btn btn-success btn-sm">
+                                            <i class="fas fa-check-circle"></i>
+                                        </button>
+                                    ` : ''}
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                // Use mock data
+                let filteredOrders = [...mockSellerOrders];
+                const status = document.getElementById('status-filter').value;
+                if (status) {
+                    filteredOrders = filteredOrders.filter(o => o.status === status);
+                }
+                const tbody = document.getElementById('orders-tbody');
+                if (filteredOrders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary">No orders found</td></tr>';
+                } else {
+                    tbody.innerHTML = filteredOrders.map(order => `
+                        <tr>
+                            <td>#${order.id}</td>
+                            <td>${order.client_username || 'N/A'}</td>
+                            <td>${order.service_name}</td>
+                            <td class="max-w-xs truncate">${order.link}</td>
+                            <td>${order.quantity}</td>
+                            <td><span class="badge ${getStatusBadgeClass(order.status)}">${formatStatus(order.status)}</span></td>
+                            <td>
+                                ${order.status === 'pending' ? `
+                                    <button onclick="acceptOrder(${order.id})" class="btn btn-success btn-sm">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button onclick="rejectOrder(${order.id})" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                ` : ''}
+                                ${order.status === 'processing' || order.status === 'in_progress' ? `
+                                    <button onclick="completeOrder(${order.id})" class="btn btn-success btn-sm">
+                                        <i class="fas fa-check-circle"></i>
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            }
+        }
+
+        async function acceptOrder(orderId) {
+            try {
+                const response = await apiRequest(`/api/orders/${orderId}/status`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: 'processing' })
+                });
+                if (response && response.success) {
+                    showNotification('Order accepted', 'success');
+                    loadOrders();
+                }
+            } catch (error) {
+                showNotification(error.message || 'Failed to accept order', 'error');
+            }
+        }
+
+        async function rejectOrder(orderId) {
+            if (!confirm('Are you sure you want to reject this order?')) return;
+            try {
+                const response = await apiRequest(`/api/orders/${orderId}/status`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: 'canceled' })
+                });
+                if (response && response.success) {
+                    showNotification('Order rejected', 'success');
+                    loadOrders();
+                }
+            } catch (error) {
+                showNotification(error.message || 'Failed to reject order', 'error');
+            }
+        }
+
+        async function completeOrder(orderId) {
+            try {
+                const response = await apiRequest(`/api/orders/${orderId}/status`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: 'completed' })
+                });
+                if (response && response.success) {
+                    showNotification('Order marked as completed', 'success');
+                    loadOrders();
+                }
+            } catch (error) {
+                showNotification(error.message || 'Failed to complete order', 'error');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadOrders);
+    </script>
+</body>
+</html>
+

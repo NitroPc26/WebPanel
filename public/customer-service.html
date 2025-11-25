@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Service - SMM WebPanel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-primary text-primary">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>SMM WebPanel</h2>
+        </div>
+        <nav>
+            <a href="/dashboard.html" class="sidebar-item">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/orders.html" class="sidebar-item">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+            </a>
+            <a href="/services.html" class="sidebar-item">
+                <i class="fas fa-list"></i>
+                <span>Services</span>
+            </a>
+            <a href="/store.html" class="sidebar-item">
+                <i class="fas fa-store"></i>
+                <span>Store</span>
+            </a>
+            <a href="/balance.html" class="sidebar-item">
+                <i class="fas fa-wallet"></i>
+                <span>Balance</span>
+            </a>
+            <a href="/tickets.html" class="sidebar-item">
+                <i class="fas fa-ticket-alt"></i>
+                <span>Support</span>
+            </a>
+            <a href="/customer-service.html" class="sidebar-item active">
+                <i class="fas fa-headset"></i>
+                <span>Customer Service</span>
+            </a>
+            <a href="/profile.html" class="sidebar-item">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            <a href="#" onclick="logout(); return false;" class="sidebar-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button onclick="toggleSidebar()" class="mobile-menu-btn" style="display: none; position: fixed; top: 20px; left: 20px; z-index: 101; background: var(--primary-color); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; box-shadow: var(--shadow-lg);">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">Customer Service</h1>
+            <p class="page-subtitle">We're here to help you with any questions or concerns</p>
+        </div>
+
+        <!-- Quick Help Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="card cursor-pointer hover:shadow-lg transition-shadow" onclick="window.location.href='/tickets.html'">
+                <div class="text-center">
+                    <i class="fas fa-ticket-alt text-4xl mb-4" style="color: var(--primary-color);"></i>
+                    <h3 class="text-lg font-bold mb-2">Create Support Ticket</h3>
+                    <p class="text-secondary text-sm">Get help with your orders or account issues</p>
+                </div>
+            </div>
+            <div class="card cursor-pointer hover:shadow-lg transition-shadow" onclick="window.location.href='/orders.html'">
+                <div class="text-center">
+                    <i class="fas fa-shopping-cart text-4xl mb-4" style="color: var(--primary-color);"></i>
+                    <h3 class="text-lg font-bold mb-2">Track Your Orders</h3>
+                    <p class="text-secondary text-sm">View and manage all your orders in one place</p>
+                </div>
+            </div>
+            <div class="card cursor-pointer hover:shadow-lg transition-shadow" onclick="window.location.href='/balance.html'">
+                <div class="text-center">
+                    <i class="fas fa-wallet text-4xl mb-4" style="color: var(--primary-color);"></i>
+                    <h3 class="text-lg font-bold mb-2">Account Balance</h3>
+                    <p class="text-secondary text-sm">Check your balance and transaction history</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="card mb-8">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-envelope"></i>
+                    Contact Information
+                </h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="font-semibold mb-2">
+                        <i class="fas fa-envelope text-primary"></i>
+                        Email Support
+                    </h4>
+                    <p class="text-secondary mb-2">For general inquiries and support:</p>
+                    <a href="mailto:support@smmwebpanel.com" class="text-primary hover:underline">
+                        support@smmwebpanel.com
+                    </a>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-2">
+                        <i class="fas fa-clock text-primary"></i>
+                        Support Hours
+                    </h4>
+                    <p class="text-secondary mb-2">We're available 24/7 to assist you:</p>
+                    <p class="text-primary font-semibold">24 Hours / 7 Days</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-2">
+                        <i class="fas fa-comments text-primary"></i>
+                        Live Chat
+                    </h4>
+                    <p class="text-secondary mb-2">Get instant help via live chat:</p>
+                    <button onclick="openLiveChat()" class="btn btn-primary btn-sm">
+                        <i class="fas fa-comments"></i>
+                        Start Chat
+                    </button>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-2">
+                        <i class="fas fa-phone text-primary"></i>
+                        Response Time
+                    </h4>
+                    <p class="text-secondary mb-2">Average response time:</p>
+                    <p class="text-primary font-semibold">Less than 1 hour</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="card mb-8">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-question-circle"></i>
+                    Frequently Asked Questions
+                </h3>
+            </div>
+            <div class="space-y-4">
+                <div class="faq-item">
+                    <button onclick="toggleFAQ(this)" class="faq-question w-full text-left flex items-center justify-between p-4 bg-tertiary rounded-lg hover:bg-opacity-80 transition-colors">
+                        <span class="font-semibold">How do I place an order?</span>
+                        <i class="fas fa-chevron-down transition-transform"></i>
+                    </button>
+                    <div class="faq-answer hidden p-4 text-secondary">
+                        <p>To place an order, go to the Services page, browse available services, select the service you want, fill in the required details (link, quantity), and click "Order Now". Your order will be processed automatically.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button onclick="toggleFAQ(this)" class="faq-question w-full text-left flex items-center justify-between p-4 bg-tertiary rounded-lg hover:bg-opacity-80 transition-colors">
+                        <span class="font-semibold">How long does it take to complete an order?</span>
+                        <i class="fas fa-chevron-down transition-transform"></i>
+                    </button>
+                    <div class="faq-answer hidden p-4 text-secondary">
+                        <p>Order completion time varies depending on the service type. Most services are completed within 24-48 hours. You can check the estimated completion time on each service page. You'll receive notifications when your order status changes.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button onclick="toggleFAQ(this)" class="faq-question w-full text-left flex items-center justify-between p-4 bg-tertiary rounded-lg hover:bg-opacity-80 transition-colors">
+                        <span class="font-semibold">How do I add funds to my account?</span>
+                        <i class="fas fa-chevron-down transition-transform"></i>
+                    </button>
+                    <div class="faq-answer hidden p-4 text-secondary">
+                        <p>Go to the Balance page and click "Add Funds". Choose your preferred payment method (PayPal, Stripe, Cryptocurrency, or Manual Payment), enter the amount (minimum $5), and complete the payment. Funds will be added to your account immediately.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button onclick="toggleFAQ(this)" class="faq-question w-full text-left flex items-center justify-between p-4 bg-tertiary rounded-lg hover:bg-opacity-80 transition-colors">
+                        <span class="font-semibold">What should I do if my order is not completed?</span>
+                        <i class="fas fa-chevron-down transition-transform"></i>
+                    </button>
+                    <div class="faq-answer hidden p-4 text-secondary">
+                        <p>If your order is not completed within the expected time, please create a support ticket from the Support page. Our team will investigate and either complete the order or provide a refund. We guarantee 100% satisfaction or your money back.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button onclick="toggleFAQ(this)" class="faq-question w-full text-left flex items-center justify-between p-4 bg-tertiary rounded-lg hover:bg-opacity-80 transition-colors">
+                        <span class="font-semibold">Can I cancel an order?</span>
+                        <i class="fas fa-chevron-down transition-transform"></i>
+                    </button>
+                    <div class="faq-answer hidden p-4 text-secondary">
+                        <p>You can cancel an order if it's still in "Pending" status. Once an order is being processed, it cannot be cancelled. If you need to cancel a processed order, please contact support immediately, and we'll do our best to assist you.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button onclick="toggleFAQ(this)" class="faq-question w-full text-left flex items-center justify-between p-4 bg-tertiary rounded-lg hover:bg-opacity-80 transition-colors">
+                        <span class="font-semibold">How do I track my order status?</span>
+                        <i class="fas fa-chevron-down transition-transform"></i>
+                    </button>
+                    <div class="faq-answer hidden p-4 text-secondary">
+                        <p>You can track your order status from the Orders page. Each order shows its current status (Pending, Processing, In Progress, Completed, etc.). You'll also receive email notifications when your order status changes.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button onclick="toggleFAQ(this)" class="faq-question w-full text-left flex items-center justify-between p-4 bg-tertiary rounded-lg hover:bg-opacity-80 transition-colors">
+                        <span class="font-semibold">What payment methods do you accept?</span>
+                        <i class="fas fa-chevron-down transition-transform"></i>
+                    </button>
+                    <div class="faq-answer hidden p-4 text-secondary">
+                        <p>We accept multiple payment methods including PayPal, Stripe, Cryptocurrency (Bitcoin, Ethereum, etc.), and Manual Payment. All payments are secure and processed through encrypted channels.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button onclick="toggleFAQ(this)" class="faq-question w-full text-left flex items-center justify-between p-4 bg-tertiary rounded-lg hover:bg-opacity-80 transition-colors">
+                        <span class="font-semibold">How do I change my password?</span>
+                        <i class="fas fa-chevron-down transition-transform"></i>
+                    </button>
+                    <div class="faq-answer hidden p-4 text-secondary">
+                        <p>Go to your Profile page, scroll down to the "Change Password" section, enter your current password and new password, then click "Change Password". Make sure your new password is at least 6 characters long.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Resources -->
+        <div class="card mb-8">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-book"></i>
+                    Help Resources
+                </h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <a href="/services.html" class="card hover:shadow-lg transition-shadow p-4 flex items-center gap-4">
+                    <i class="fas fa-list text-3xl text-primary"></i>
+                    <div>
+                        <h4 class="font-semibold">Browse Services</h4>
+                        <p class="text-secondary text-sm">View all available services and pricing</p>
+                    </div>
+                </a>
+                <a href="/orders.html" class="card hover:shadow-lg transition-shadow p-4 flex items-center gap-4">
+                    <i class="fas fa-shopping-cart text-3xl text-primary"></i>
+                    <div>
+                        <h4 class="font-semibold">Order History</h4>
+                        <p class="text-secondary text-sm">View all your past and current orders</p>
+                    </div>
+                </a>
+                <a href="/balance.html" class="card hover:shadow-lg transition-shadow p-4 flex items-center gap-4">
+                    <i class="fas fa-wallet text-3xl text-primary"></i>
+                    <div>
+                        <h4 class="font-semibold">Account Balance</h4>
+                        <p class="text-secondary text-sm">Manage your funds and transactions</p>
+                    </div>
+                </a>
+                <a href="/tickets.html" class="card hover:shadow-lg transition-shadow p-4 flex items-center gap-4">
+                    <i class="fas fa-ticket-alt text-3xl text-primary"></i>
+                    <div>
+                        <h4 class="font-semibold">Support Tickets</h4>
+                        <p class="text-secondary text-sm">Create and manage support tickets</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Contact Form -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-paper-plane"></i>
+                    Send Us a Message
+                </h3>
+            </div>
+            <form id="contact-form" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">Name</label>
+                        <input type="text" id="contact-name" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="form-label">Email</label>
+                        <input type="email" id="contact-email" class="form-input" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label">Subject</label>
+                    <select id="contact-subject" class="form-input" required>
+                        <option value="">Select a subject</option>
+                        <option value="order">Order Inquiry</option>
+                        <option value="payment">Payment Issue</option>
+                        <option value="account">Account Problem</option>
+                        <option value="service">Service Question</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Message</label>
+                    <textarea id="contact-message" class="form-input" rows="5" required placeholder="Please describe your issue or question in detail..."></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                        Send Message
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        // Toggle FAQ items
+        function toggleFAQ(button) {
+            const item = button.closest('.faq-item');
+            const answer = item.querySelector('.faq-answer');
+            const icon = button.querySelector('.fas');
+            
+            const isOpen = !answer.classList.contains('hidden');
+            
+            // Close all FAQ items
+            document.querySelectorAll('.faq-item').forEach(faqItem => {
+                const faqAnswer = faqItem.querySelector('.faq-answer');
+                const faqIcon = faqItem.querySelector('.faq-question .fas');
+                faqAnswer.classList.add('hidden');
+                if (faqIcon) {
+                    faqIcon.style.transform = 'rotate(0deg)';
+                }
+            });
+            
+            // Open clicked item if it was closed
+            if (isOpen) {
+                answer.classList.add('hidden');
+                if (icon) {
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            } else {
+                answer.classList.remove('hidden');
+                if (icon) {
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            }
+        }
+
+        // Open live chat
+        function openLiveChat() {
+            showNotification('Live chat will be available soon! For now, please create a support ticket.', 'info');
+            setTimeout(() => {
+                window.location.href = '/tickets.html';
+            }, 2000);
+        }
+
+        // Handle contact form submission
+        document.getElementById('contact-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('contact-name').value;
+            const email = document.getElementById('contact-email').value;
+            const subject = document.getElementById('contact-subject').value;
+            const message = document.getElementById('contact-message').value;
+
+            try {
+                // Create a support ticket instead of sending email directly
+                const response = await apiRequest('/api/tickets', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        subject: `Contact Form: ${subject}`,
+                        message: `From: ${name} (${email})\n\n${message}`,
+                        priority: 'medium'
+                    })
+                });
+
+                if (response && response.success) {
+                    showNotification('Your message has been sent successfully! We will respond as soon as possible.', 'success');
+                    document.getElementById('contact-form').reset();
+                    // Redirect to tickets page after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/tickets.html';
+                    }, 2000);
+                }
+            } catch (error) {
+                showNotification(error.message || 'Failed to send message. Please try again.', 'error');
+            }
+        });
+
+        // Pre-fill contact form with user data if available
+        window.addEventListener('DOMContentLoaded', () => {
+            const user = getCurrentUser();
+            if (user) {
+                const nameInput = document.getElementById('contact-name');
+                const emailInput = document.getElementById('contact-email');
+                if (nameInput && user.username) {
+                    nameInput.value = user.username;
+                }
+                if (emailInput && user.email) {
+                    emailInput.value = user.email;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+

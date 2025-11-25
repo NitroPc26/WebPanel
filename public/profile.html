@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - SMM WebPanel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-primary text-primary">
+        <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>SMM WebPanel</h2>
+        </div>
+        <nav>
+            <a href="/dashboard.html" class="sidebar-item">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/orders.html" class="sidebar-item">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+            </a>
+            <a href="/services.html" class="sidebar-item">
+                <i class="fas fa-list"></i>
+                <span>Services</span>
+            </a>
+            <a href="/store.html" class="sidebar-item">
+                <i class="fas fa-store"></i>
+                <span>Store</span>
+            </a>
+            <a href="/balance.html" class="sidebar-item">
+                <i class="fas fa-wallet"></i>
+                <span>Balance</span>
+            </a>
+            <a href="/tickets.html" class="sidebar-item">
+                <i class="fas fa-ticket-alt"></i>
+                <span>Support</span>
+            </a>
+            <a href="/customer-service.html" class="sidebar-item">
+                <i class="fas fa-headset"></i>
+                <span>Customer Service</span>
+            </a>
+            <a href="/profile.html" class="sidebar-item">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            <a href="#" onclick="logout(); return false;" class="sidebar-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button onclick="toggleSidebar()" class="mobile-menu-btn" style="display: none; position: fixed; top: 20px; left: 20px; z-index: 101; background: var(--primary-color); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; box-shadow: var(--shadow-lg);">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">Profile</h1>
+            <p class="page-subtitle">Manage your account settings</p>
+        </div>
+
+        <!-- Profile Information -->
+        <div class="card mb-8">
+            <div class="card-header">
+                <h3 class="card-title">Profile Information</h3>
+            </div>
+            <form id="profile-form" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">Username</label>
+                        <input type="text" id="username" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="form-label">Email</label>
+                        <input type="email" id="email" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="form-label">Role</label>
+                        <input type="text" id="role" class="form-input" readonly>
+                    </div>
+                    <div>
+                        <label class="form-label">Balance</label>
+                        <input type="text" id="balance" class="form-input" readonly>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="form-label">Account Created</label>
+                        <input type="text" id="created_at" class="form-input" readonly>
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Change Password -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Change Password</h3>
+            </div>
+            <form id="password-form" class="space-y-4">
+                <div>
+                    <label class="form-label">Current Password</label>
+                    <input type="password" id="current-password" class="form-input" required>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">New Password</label>
+                        <input type="password" id="new-password" class="form-input" required minlength="6">
+                    </div>
+                    <div>
+                        <label class="form-label">Confirm New Password</label>
+                        <input type="password" id="confirm-password" class="form-input" required minlength="6">
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-key"></i>
+                        Change Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        async function loadProfile() {
+            try {
+                const response = await apiRequest('/api/users/profile');
+                if (response && response.success) {
+                    const user = response.user;
+                    document.getElementById('username').value = user.username;
+                    document.getElementById('email').value = user.email;
+                    document.getElementById('role').value = formatStatus(user.role);
+                    document.getElementById('balance').value = formatCurrency(user.balance || 0);
+                    document.getElementById('created_at').value = formatDate(user.created_at);
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                showNotification('Failed to load profile', 'error');
+            }
+        }
+
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+
+            try {
+                const response = await apiRequest('/api/users/profile', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        username,
+                        email
+                    })
+                });
+
+                if (response && response.success) {
+                    showNotification('Profile updated successfully!', 'success');
+                    // Update stored user data
+                    const user = getCurrentUser();
+                    if (user) {
+                        user.username = username;
+                        user.email = email;
+                        setCurrentUser(user);
+                    }
+                }
+            } catch (error) {
+                showNotification(error.message || 'Failed to update profile', 'error');
+            }
+        });
+
+        document.getElementById('password-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            if (newPassword !== confirmPassword) {
+                showNotification('New passwords do not match', 'error');
+                return;
+            }
+
+            try {
+                const response = await apiRequest('/api/users/password', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+
+                if (response && response.success) {
+                    showNotification('Password changed successfully!', 'success');
+                    document.getElementById('password-form').reset();
+                }
+            } catch (error) {
+                showNotification(error.message || 'Failed to change password', 'error');
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', loadProfile);
+    </script>
+</body>
+</html>
+

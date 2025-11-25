@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - SMM WebPanel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-primary text-primary">
+    <div class="sidebar" id="sidebar">
+        <div class="p-6 border-b border-color">
+            <h2 class="text-xl font-bold">Admin Panel</h2>
+        </div>
+        <nav class="py-4">
+            <a href="/admin-dashboard.html" class="sidebar-item">
+                <i class="fas fa-home w-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/admin-users.html" class="sidebar-item">
+                <i class="fas fa-users w-5"></i>
+                <span>Users</span>
+            </a>
+            <a href="/admin-settings.html" class="sidebar-item active">
+                <i class="fas fa-cog w-5"></i>
+                <span>Settings</span>
+            </a>
+            <a href="/admin-logs.html" class="sidebar-item">
+                <i class="fas fa-file-alt w-5"></i>
+                <span>Logs</span>
+            </a>
+            <a href="#" onclick="logout(); return false;" class="sidebar-item">
+                <i class="fas fa-sign-out-alt w-5"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content" >
+        <h1 class="text-3xl font-bold mb-8">Settings</h1>
+
+        <form id="settings-form" class="space-y-6">
+            <!-- General Settings -->
+            <div class="card">
+                <h2 class="text-xl font-bold mb-4">General Settings</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="form-label">Site Name</label>
+                        <input type="text" id="site_name" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="form-label">Site Logo URL</label>
+                        <input type="text" id="site_logo" class="form-input">
+                    </div>
+                    <div>
+                        <label class="form-label">Currency</label>
+                        <select id="currency" class="form-input">
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                            <option value="GBP">GBP</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="maintenance_mode" class="mr-2">
+                        <label for="maintenance_mode">Maintenance Mode</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Settings -->
+            <div class="card">
+                <h2 class="text-xl font-bold mb-4">Payment Settings</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="form-label">Minimum Deposit</label>
+                        <input type="number" id="min_deposit" class="form-input" step="0.01" min="0">
+                    </div>
+                    <div>
+                        <label class="form-label">Maximum Deposit</label>
+                        <input type="number" id="max_deposit" class="form-input" step="0.01" min="0">
+                    </div>
+                    <div>
+                        <label class="form-label">Global Margin (%)</label>
+                        <input type="number" id="global_margin" class="form-input" step="0.01" min="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email Settings -->
+            <div class="card">
+                <h2 class="text-xl font-bold mb-4">Email Settings (SMTP)</h2>
+                <div class="space-y-4">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="smtp_enabled" class="mr-2">
+                        <label for="smtp_enabled">Enable SMTP</label>
+                    </div>
+                    <div>
+                        <label class="form-label">SMTP Host</label>
+                        <input type="text" id="smtp_host" class="form-input">
+                    </div>
+                    <div>
+                        <label class="form-label">SMTP Port</label>
+                        <input type="number" id="smtp_port" class="form-input">
+                    </div>
+                    <div>
+                        <label class="form-label">SMTP User</label>
+                        <input type="text" id="smtp_user" class="form-input">
+                    </div>
+                    <div>
+                        <label class="form-label">SMTP Password</label>
+                        <input type="password" id="smtp_pass" class="form-input">
+                    </div>
+                    <div>
+                        <label class="form-label">From Email</label>
+                        <input type="email" id="smtp_from" class="form-input">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    Save Settings
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        async function loadSettings() {
+            try {
+                const response = await apiRequest('/api/admin/settings');
+                if (response && response.success) {
+                    const settings = response.settings;
+                    
+                    document.getElementById('site_name').value = settings.site_name || '';
+                    document.getElementById('site_logo').value = settings.site_logo || '';
+                    document.getElementById('currency').value = settings.currency || 'USD';
+                    document.getElementById('maintenance_mode').checked = settings.maintenance_mode || false;
+                    document.getElementById('min_deposit').value = settings.min_deposit || 5.00;
+                    document.getElementById('max_deposit').value = settings.max_deposit || 10000.00;
+                    document.getElementById('global_margin').value = settings.global_margin || 0;
+                    document.getElementById('smtp_enabled').checked = settings.smtp_enabled || false;
+                    document.getElementById('smtp_host').value = settings.smtp_host || '';
+                    document.getElementById('smtp_port').value = settings.smtp_port || 587;
+                    document.getElementById('smtp_user').value = settings.smtp_user || '';
+                    document.getElementById('smtp_pass').value = settings.smtp_pass || '';
+                    document.getElementById('smtp_from').value = settings.smtp_from || '';
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                showNotification('Failed to load settings', 'error');
+            }
+        }
+
+        document.getElementById('settings-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const settings = {
+                site_name: document.getElementById('site_name').value,
+                site_logo: document.getElementById('site_logo').value,
+                currency: document.getElementById('currency').value,
+                maintenance_mode: document.getElementById('maintenance_mode').checked,
+                min_deposit: parseFloat(document.getElementById('min_deposit').value),
+                max_deposit: parseFloat(document.getElementById('max_deposit').value),
+                global_margin: parseFloat(document.getElementById('global_margin').value),
+                smtp_enabled: document.getElementById('smtp_enabled').checked,
+                smtp_host: document.getElementById('smtp_host').value,
+                smtp_port: parseInt(document.getElementById('smtp_port').value),
+                smtp_user: document.getElementById('smtp_user').value,
+                smtp_pass: document.getElementById('smtp_pass').value,
+                smtp_from: document.getElementById('smtp_from').value
+            };
+
+            try {
+                const response = await apiRequest('/api/admin/settings', {
+                    method: 'PUT',
+                    body: JSON.stringify(settings)
+                });
+
+                if (response && response.success) {
+                    showNotification('Settings saved successfully!', 'success');
+                }
+            } catch (error) {
+                showNotification(error.message || 'Failed to save settings', 'error');
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', loadSettings);
+    </script>
+</body>
+</html>
+

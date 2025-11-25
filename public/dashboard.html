@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SMM WebPanel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/mobile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-primary text-primary">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>SMM WebPanel</h2>
+        </div>
+        <nav>
+            <a href="/dashboard.html" class="sidebar-item active">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/orders.html" class="sidebar-item">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+            </a>
+            <a href="/services.html" class="sidebar-item">
+                <i class="fas fa-list"></i>
+                <span>Services</span>
+            </a>
+            <a href="/store.html" class="sidebar-item">
+                <i class="fas fa-store"></i>
+                <span>Store</span>
+            </a>
+            <a href="/balance.html" class="sidebar-item">
+                <i class="fas fa-wallet"></i>
+                <span>Balance</span>
+            </a>
+            <a href="/tickets.html" class="sidebar-item">
+                <i class="fas fa-ticket-alt"></i>
+                <span>Support</span>
+            </a>
+            <a href="/customer-service.html" class="sidebar-item">
+                <i class="fas fa-headset"></i>
+                <span>Customer Service</span>
+            </a>
+            <a href="/profile.html" class="sidebar-item">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            <a href="#" onclick="logout(); return false;" class="sidebar-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button onclick="toggleSidebar()" class="mobile-menu-btn" style="display: none; position: fixed; top: 20px; left: 20px; z-index: 101; background: var(--primary-color); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer;">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="page-title">Dashboard</h1>
+                    <p class="page-subtitle">Welcome back, <span id="user-name" class="font-semibold text-primary"></span>!</p>
+                </div>
+                <button onclick="toggleTheme()" class="btn btn-secondary" id="theme-toggle" title="Toggle Theme">
+                    <span id="theme-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 fade-in-up">
+            <div class="stats-card">
+                <i class="fas fa-shopping-cart icon"></i>
+                <h3>Total Orders</h3>
+                <div class="value" id="total-orders">0</div>
+            </div>
+            <div class="stats-card" style="background: linear-gradient(135deg, #f59e0b, #f97316);">
+                <i class="fas fa-clock icon"></i>
+                <h3>Pending Orders</h3>
+                <div class="value" id="pending-orders">0</div>
+            </div>
+            <div class="stats-card" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <i class="fas fa-check-circle icon"></i>
+                <h3>Completed Orders</h3>
+                <div class="value" id="completed-orders">0</div>
+            </div>
+            <div class="stats-card" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                <i class="fas fa-times-circle icon"></i>
+                <h3>Failed Orders</h3>
+                <div class="value" id="failed-orders">0</div>
+            </div>
+        </div>
+
+        <!-- Balance Card -->
+        <div class="card mb-8 fade-in">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                    <h3 class="card-title mb-2">Current Balance</h3>
+                    <div class="text-5xl font-bold" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;" id="balance">$0.00</div>
+                </div>
+                <a href="/balance.html" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus"></i>
+                    Add Funds
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card mb-8 fade-in">
+            <div class="card-header">
+                <h3 class="card-title">Quick Actions</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <a href="/services.html" class="btn btn-secondary text-center" style="flex-direction: column; padding: 20px;">
+                    <i class="fas fa-plus-circle" style="font-size: 24px; margin-bottom: 8px;"></i>
+                    <span>Create New Order</span>
+                </a>
+                <a href="/orders.html" class="btn btn-secondary text-center" style="flex-direction: column; padding: 20px;">
+                    <i class="fas fa-list" style="font-size: 24px; margin-bottom: 8px;"></i>
+                    <span>View All Orders</span>
+                </a>
+                <a href="/tickets.html" class="btn btn-secondary text-center" style="flex-direction: column; padding: 20px;">
+                    <i class="fas fa-headset" style="font-size: 24px; margin-bottom: 8px;"></i>
+                    <span>Contact Support</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="card fade-in">
+            <div class="card-header">
+                <h3 class="card-title">Recent Orders</h3>
+            </div>
+            <div id="recent-orders" class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Service</th>
+                            <th>Link</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-tbody">
+                        <tr>
+                            <td colspan="7" class="text-center text-secondary">
+                                <div class="spinner mx-auto"></div>
+                                <p class="mt-4">Loading orders...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        const user = getCurrentUser();
+        if (user) {
+            document.getElementById('user-name').textContent = user.username;
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            const sidebar = document.getElementById('sidebar');
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+            if (window.innerWidth <= 1024 && !sidebar.contains(e.target) && !menuBtn.contains(e.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
+
+        // Show mobile menu button on small screens
+        function checkScreenSize() {
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+            if (window.innerWidth <= 1024) {
+                menuBtn.style.display = 'block';
+            } else {
+                menuBtn.style.display = 'none';
+                document.getElementById('sidebar').classList.remove('open');
+            }
+        }
+
+        window.addEventListener('resize', checkScreenSize);
+        window.addEventListener('DOMContentLoaded', checkScreenSize);
+
+        // Mock data
+        const mockStats = {
+            total_orders: 47,
+            pending_orders: 3,
+            completed_orders: 42,
+            failed_orders: 2,
+            balance: 1250.75
+        };
+
+        const mockRecentOrders = [
+            { id: 1001, service_name: "Instagram Followers", link: "https://instagram.com/user123", quantity: 1000, price: 15.99, status: "completed", created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
+            { id: 1002, service_name: "YouTube Views", link: "https://youtube.com/watch?v=abc123", quantity: 5000, price: 25.50, status: "processing", created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
+            { id: 1003, service_name: "Twitter Followers", link: "https://twitter.com/user456", quantity: 2000, price: 19.99, status: "pending", created_at: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString() },
+            { id: 1004, service_name: "TikTok Likes", link: "https://tiktok.com/@user789", quantity: 10000, price: 12.99, status: "completed", created_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString() },
+            { id: 1005, service_name: "Facebook Page Likes", link: "https://facebook.com/page123", quantity: 500, price: 8.50, status: "completed", created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() }
+        ];
+
+        async function loadDashboard() {
+            try {
+                // Try to load real data
+                const statsResponse = await apiRequest('/dashboard/stats');
+                if (statsResponse && statsResponse.success) {
+                    const stats = statsResponse.stats;
+                    animateValue('total-orders', 0, stats.total_orders || 0, 1000);
+                    animateValue('pending-orders', 0, stats.pending_orders || 0, 1000);
+                    animateValue('completed-orders', 0, stats.completed_orders || 0, 1000);
+                    animateValue('failed-orders', 0, stats.failed_orders || 0, 1000);
+                    document.getElementById('balance').textContent = formatCurrency(stats.balance || 0);
+                } else {
+                    // Use mock data
+                    animateValue('total-orders', 0, mockStats.total_orders, 1000);
+                    animateValue('pending-orders', 0, mockStats.pending_orders, 1000);
+                    animateValue('completed-orders', 0, mockStats.completed_orders, 1000);
+                    animateValue('failed-orders', 0, mockStats.failed_orders, 1000);
+                    document.getElementById('balance').textContent = formatCurrency(mockStats.balance);
+                }
+
+                const ordersResponse = await apiRequest('/dashboard/recent-orders?limit=10');
+                if (ordersResponse && ordersResponse.success) {
+                    const orders = ordersResponse.orders;
+                    const tbody = document.getElementById('orders-tbody');
+                    if (orders.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-8"><i class="fas fa-inbox" style="font-size: 48px; opacity: 0.3; margin-bottom: 16px; display: block;"></i>No orders yet</td></tr>';
+                    } else {
+                        tbody.innerHTML = orders.map((order, index) => `
+                            <tr class="fade-in" style="animation-delay: ${index * 0.1}s">
+                                <td><strong>#${order.id}</strong></td>
+                                <td>${order.service_name}</td>
+                                <td class="max-w-xs truncate" title="${order.link}">${order.link}</td>
+                                <td><span class="badge badge-info">${order.quantity}</span></td>
+                                <td><strong>${formatCurrency(order.price)}</strong></td>
+                                <td><span class="badge ${getStatusBadgeClass(order.status)}">${formatStatus(order.status)}</span></td>
+                                <td class="text-muted">${formatRelativeTime(order.created_at)}</td>
+                            </tr>
+                        `).join('');
+                    }
+                } else {
+                    // Use mock data
+                    const tbody = document.getElementById('orders-tbody');
+                    tbody.innerHTML = mockRecentOrders.map((order, index) => `
+                        <tr class="fade-in" style="animation-delay: ${index * 0.1}s">
+                            <td><strong>#${order.id}</strong></td>
+                            <td>${order.service_name}</td>
+                            <td class="max-w-xs truncate" title="${order.link}">${order.link}</td>
+                            <td><span class="badge badge-info">${order.quantity}</span></td>
+                            <td><strong>${formatCurrency(order.price)}</strong></td>
+                            <td><span class="badge ${getStatusBadgeClass(order.status)}">${formatStatus(order.status)}</span></td>
+                            <td class="text-muted">${formatRelativeTime(order.created_at)}</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                // Use mock data on error
+                animateValue('total-orders', 0, mockStats.total_orders, 1000);
+                animateValue('pending-orders', 0, mockStats.pending_orders, 1000);
+                animateValue('completed-orders', 0, mockStats.completed_orders, 1000);
+                animateValue('failed-orders', 0, mockStats.failed_orders, 1000);
+                document.getElementById('balance').textContent = formatCurrency(mockStats.balance);
+                
+                const tbody = document.getElementById('orders-tbody');
+                tbody.innerHTML = mockRecentOrders.map((order, index) => `
+                    <tr class="fade-in" style="animation-delay: ${index * 0.1}s">
+                        <td><strong>#${order.id}</strong></td>
+                        <td>${order.service_name}</td>
+                        <td class="max-w-xs truncate" title="${order.link}">${order.link}</td>
+                        <td><span class="badge badge-info">${order.quantity}</span></td>
+                        <td><strong>${formatCurrency(order.price)}</strong></td>
+                        <td><span class="badge ${getStatusBadgeClass(order.status)}">${formatStatus(order.status)}</span></td>
+                        <td class="text-muted">${formatRelativeTime(order.created_at)}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function animateValue(id, start, end, duration) {
+            const element = document.getElementById(id);
+            if (!element) return;
+            
+            const range = end - start;
+            const increment = end > start ? 1 : -1;
+            const stepTime = Math.abs(Math.floor(duration / range));
+            let current = start;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                element.textContent = current;
+                if (current == end) {
+                    clearInterval(timer);
+                }
+            }, stepTime);
+        }
+
+        window.addEventListener('DOMContentLoaded', loadDashboard);
+    </script>
+</body>
+</html>
+

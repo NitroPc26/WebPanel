@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders - SMM WebPanel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-primary text-primary">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>SMM WebPanel</h2>
+        </div>
+        <nav>
+            <a href="/dashboard.html" class="sidebar-item">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/orders.html" class="sidebar-item active">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+            </a>
+            <a href="/services.html" class="sidebar-item">
+                <i class="fas fa-list"></i>
+                <span>Services</span>
+            </a>
+            <a href="/store.html" class="sidebar-item">
+                <i class="fas fa-store"></i>
+                <span>Store</span>
+            </a>
+            <a href="/balance.html" class="sidebar-item">
+                <i class="fas fa-wallet"></i>
+                <span>Balance</span>
+            </a>
+            <a href="/tickets.html" class="sidebar-item">
+                <i class="fas fa-ticket-alt"></i>
+                <span>Support</span>
+            </a>
+            <a href="/customer-service.html" class="sidebar-item">
+                <i class="fas fa-headset"></i>
+                <span>Customer Service</span>
+            </a>
+            <a href="/profile.html" class="sidebar-item">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            <a href="#" onclick="logout(); return false;" class="sidebar-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button onclick="toggleSidebar()" class="mobile-menu-btn" style="display: none; position: fixed; top: 20px; left: 20px; z-index: 101; background: var(--primary-color); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; box-shadow: var(--shadow-lg);">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="page-title">My Orders</h1>
+                </div>
+                <a href="/services.html" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    New Order
+                </a>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="form-label">Status</label>
+                    <select id="status-filter" class="form-input">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="partial">Partial</option>
+                        <option value="canceled">Canceled</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Search</label>
+                    <input type="text" id="search-input" class="form-input" placeholder="Search orders...">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="loadOrders()" class="btn btn-primary w-full">
+                        <i class="fas fa-search"></i>
+                        Filter
+                    </button>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="resetFilters()" class="btn btn-secondary w-full">
+                        <i class="fas fa-redo"></i>
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Table -->
+        <div class="card">
+            <div id="orders-container" class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Service</th>
+                            <th>Link</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-tbody">
+                        <tr>
+                            <td colspan="8" class="text-center text-secondary">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination" class="mt-6 flex justify-center gap-2"></div>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        let currentPage = 1;
+        let currentStatus = '';
+        let currentSearch = '';
+
+        // Mock orders data
+        const mockOrders = [
+            { id: 1001, service_name: "Instagram Followers", link: "https://instagram.com/user123", quantity: 1000, price: 15.99, status: "completed", created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+            { id: 1002, service_name: "YouTube Views", link: "https://youtube.com/watch?v=abc123", quantity: 5000, price: 25.50, status: "processing", created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
+            { id: 1003, service_name: "Twitter Followers", link: "https://twitter.com/user456", quantity: 2000, price: 19.99, status: "pending", created_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString() },
+            { id: 1004, service_name: "TikTok Likes", link: "https://tiktok.com/@user789", quantity: 10000, price: 12.99, status: "completed", created_at: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString() },
+            { id: 1005, service_name: "Facebook Page Likes", link: "https://facebook.com/page123", quantity: 500, price: 8.50, status: "completed", created_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString() },
+            { id: 1006, service_name: "Instagram Likes", link: "https://instagram.com/post456", quantity: 5000, price: 9.99, status: "in_progress", created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() },
+            { id: 1007, service_name: "YouTube Subscribers", link: "https://youtube.com/channel/xyz", quantity: 1000, price: 45.00, status: "completed", created_at: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString() },
+            { id: 1008, service_name: "Snapchat Followers", link: "https://snapchat.com/add/user123", quantity: 2000, price: 18.50, status: "partial", created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() }
+        ];
+
+        async function loadOrders(page = 1) {
+            currentPage = page;
+            currentStatus = document.getElementById('status-filter').value;
+            currentSearch = document.getElementById('search-input').value;
+
+            try {
+                let url = `/api/orders?page=${page}&limit=20`;
+                if (currentStatus) url += `&status=${currentStatus}`;
+                if (currentSearch) url += `&search=${encodeURIComponent(currentSearch)}`;
+
+                const response = await apiRequest(url);
+                if (response && response.success) {
+                    const orders = response.orders;
+                    const tbody = document.getElementById('orders-tbody');
+
+                    if (orders.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary">No orders found</td></tr>';
+                    } else {
+                        tbody.innerHTML = orders.map(order => `
+                            <tr>
+                                <td>#${order.id}</td>
+                                <td>${order.service_name}</td>
+                                <td class="max-w-xs truncate" title="${order.link}">${order.link}</td>
+                                <td>${order.quantity}</td>
+                                <td>${formatCurrency(order.price)}</td>
+                                <td><span class="badge ${getStatusBadgeClass(order.status)}">${formatStatus(order.status)}</span></td>
+                                <td>${formatDate(order.created_at)}</td>
+                                <td>
+                                    <button onclick="viewOrder(${order.id})" class="btn btn-secondary btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+
+                    // Pagination
+                    if (response.pagination) {
+                        const pagination = response.pagination;
+                        const paginationEl = document.getElementById('pagination');
+                        let paginationHTML = '';
+
+                        if (pagination.page > 1) {
+                            paginationHTML += `<button onclick="loadOrders(${pagination.page - 1})" class="btn btn-secondary">Previous</button>`;
+                        }
+
+                        paginationHTML += `<span class="px-4 py-2">Page ${pagination.page} of ${pagination.pages}</span>`;
+
+                        if (pagination.page < pagination.pages) {
+                            paginationHTML += `<button onclick="loadOrders(${pagination.page + 1})" class="btn btn-secondary">Next</button>`;
+                        }
+
+                        paginationEl.innerHTML = paginationHTML;
+                    }
+                } else {
+                    // Use mock data
+                    let filteredOrders = [...mockOrders];
+                    if (currentStatus) {
+                        filteredOrders = filteredOrders.filter(o => o.status === currentStatus);
+                    }
+                    if (currentSearch) {
+                        const searchLower = currentSearch.toLowerCase();
+                        filteredOrders = filteredOrders.filter(o => 
+                            o.service_name.toLowerCase().includes(searchLower) || 
+                            o.link.toLowerCase().includes(searchLower)
+                        );
+                    }
+                    const tbody = document.getElementById('orders-tbody');
+                    if (filteredOrders.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary">No orders found</td></tr>';
+                    } else {
+                        tbody.innerHTML = filteredOrders.map(order => `
+                            <tr>
+                                <td>#${order.id}</td>
+                                <td>${order.service_name}</td>
+                                <td class="max-w-xs truncate" title="${order.link}">${order.link}</td>
+                                <td>${order.quantity}</td>
+                                <td>${formatCurrency(order.price)}</td>
+                                <td><span class="badge ${getStatusBadgeClass(order.status)}">${formatStatus(order.status)}</span></td>
+                                <td>${formatDate(order.created_at)}</td>
+                                <td>
+                                    <button onclick="viewOrder(${order.id})" class="btn btn-secondary btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                // Use mock data on error
+                let filteredOrders = [...mockOrders];
+                if (currentStatus) {
+                    filteredOrders = filteredOrders.filter(o => o.status === currentStatus);
+                }
+                if (currentSearch) {
+                    const searchLower = currentSearch.toLowerCase();
+                    filteredOrders = filteredOrders.filter(o => 
+                        o.service_name.toLowerCase().includes(searchLower) || 
+                        o.link.toLowerCase().includes(searchLower)
+                    );
+                }
+                const tbody = document.getElementById('orders-tbody');
+                if (filteredOrders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary">No orders found</td></tr>';
+                } else {
+                    tbody.innerHTML = filteredOrders.map(order => `
+                        <tr>
+                            <td>#${order.id}</td>
+                            <td>${order.service_name}</td>
+                            <td class="max-w-xs truncate" title="${order.link}">${order.link}</td>
+                            <td>${order.quantity}</td>
+                            <td>${formatCurrency(order.price)}</td>
+                            <td><span class="badge ${getStatusBadgeClass(order.status)}">${formatStatus(order.status)}</span></td>
+                            <td>${formatDate(order.created_at)}</td>
+                            <td>
+                                <button onclick="viewOrder(${order.id})" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            }
+        }
+
+        function resetFilters() {
+            document.getElementById('status-filter').value = '';
+            document.getElementById('search-input').value = '';
+            loadOrders(1);
+        }
+
+        function viewOrder(orderId) {
+            window.location.href = `/order-detail.html?id=${orderId}`;
+        }
+
+        // Search debounced
+        document.getElementById('search-input').addEventListener('input', debounce(() => {
+            loadOrders(1);
+        }, 500));
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadOrders();
+        });
+    </script>
+</body>
+</html>
+

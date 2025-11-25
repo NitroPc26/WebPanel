@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Tickets - SMM WebPanel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-primary text-primary">
+        <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>SMM WebPanel</h2>
+        </div>
+        <nav>
+            <a href="/dashboard.html" class="sidebar-item">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/orders.html" class="sidebar-item">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+            </a>
+            <a href="/services.html" class="sidebar-item">
+                <i class="fas fa-list"></i>
+                <span>Services</span>
+            </a>
+            <a href="/store.html" class="sidebar-item">
+                <i class="fas fa-store"></i>
+                <span>Store</span>
+            </a>
+            <a href="/balance.html" class="sidebar-item">
+                <i class="fas fa-wallet"></i>
+                <span>Balance</span>
+            </a>
+            <a href="/tickets.html" class="sidebar-item active">
+                <i class="fas fa-ticket-alt"></i>
+                <span>Support</span>
+            </a>
+            <a href="/customer-service.html" class="sidebar-item">
+                <i class="fas fa-headset"></i>
+                <span>Customer Service</span>
+            </a>
+            <a href="/profile.html" class="sidebar-item">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            <a href="#" onclick="logout(); return false;" class="sidebar-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button onclick="toggleSidebar()" class="mobile-menu-btn" style="display: none; position: fixed; top: 20px; left: 20px; z-index: 101; background: var(--primary-color); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; box-shadow: var(--shadow-lg);">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="page-title">Support Tickets</h1>
+                    <p class="page-subtitle">Manage your support tickets</p>
+                </div>
+                <button onclick="openNewTicketModal()" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    New Ticket
+                </button>
+            </div>
+        </div>
+
+        <!-- Tickets Table -->
+        <div class="card">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Subject</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tickets-tbody">
+                        <tr>
+                            <td colspan="6" class="text-center text-secondary">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Ticket Modal -->
+    <div id="new-ticket-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Create New Ticket</h2>
+                <button onclick="closeNewTicketModal()" class="text-secondary hover:text-primary">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <form id="new-ticket-form" class="space-y-4">
+                <div>
+                    <label class="form-label">Subject</label>
+                    <input type="text" id="ticket-subject" class="form-input" required>
+                </div>
+                <div>
+                    <label class="form-label">Priority</label>
+                    <select id="ticket-priority" class="form-input">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Message</label>
+                    <textarea id="ticket-message" class="form-input" rows="5" required></textarea>
+                </div>
+                <div class="flex gap-4">
+                    <button type="submit" class="btn btn-primary flex-1">
+                        <i class="fas fa-paper-plane"></i>
+                        Submit
+                    </button>
+                    <button type="button" onclick="closeNewTicketModal()" class="btn btn-secondary">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Ticket Detail Modal -->
+    <div id="ticket-detail-modal" class="modal-overlay hidden">
+        <div class="modal" style="max-width: 800px;">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold" id="ticket-detail-subject"></h2>
+                <button onclick="closeTicketDetailModal()" class="text-secondary hover:text-primary">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div id="ticket-detail-messages" class="space-y-4 mb-4 max-h-96 overflow-y-auto">
+                <!-- Messages will be loaded here -->
+            </div>
+            <form id="ticket-reply-form" class="space-y-4">
+                <input type="hidden" id="ticket-detail-id">
+                <div>
+                    <label class="form-label">Reply</label>
+                    <textarea id="ticket-reply-message" class="form-input" rows="3" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary w-full">
+                    <i class="fas fa-paper-plane"></i>
+                    Send Reply
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        // Mock tickets
+        const mockTickets = [
+            { id: 1, subject: "Order not completed", status: "open", priority: "high", created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+            { id: 2, subject: "Payment issue", status: "answered", priority: "medium", created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
+            { id: 3, subject: "Account question", status: "closed", priority: "low", created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString() }
+        ];
+
+        async function loadTickets() {
+            try {
+                const response = await apiRequest('/api/tickets');
+                if (response && response.success) {
+                    const tickets = response.tickets;
+                    const tbody = document.getElementById('tickets-tbody');
+
+                    if (tickets.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary">No tickets yet</td></tr>';
+                    } else {
+                        tbody.innerHTML = tickets.map(ticket => `
+                            <tr>
+                                <td>#${ticket.id}</td>
+                                <td>${ticket.subject}</td>
+                                <td><span class="badge ${getStatusBadgeClass(ticket.status)}">${formatStatus(ticket.status)}</span></td>
+                                <td><span class="badge ${ticket.priority === 'high' ? 'badge-danger' : ticket.priority === 'medium' ? 'badge-warning' : 'badge-info'}">${formatStatus(ticket.priority)}</span></td>
+                                <td>${formatRelativeTime(ticket.created_at)}</td>
+                                <td>
+                                    <button onclick="viewTicket(${ticket.id})" class="btn btn-secondary btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+                } else {
+                    // Use mock data
+                    const tbody = document.getElementById('tickets-tbody');
+                    tbody.innerHTML = mockTickets.map(ticket => `
+                        <tr>
+                            <td>#${ticket.id}</td>
+                            <td>${ticket.subject}</td>
+                            <td><span class="badge ${getStatusBadgeClass(ticket.status)}">${formatStatus(ticket.status)}</span></td>
+                            <td><span class="badge ${ticket.priority === 'high' ? 'badge-danger' : ticket.priority === 'medium' ? 'badge-warning' : 'badge-info'}">${formatStatus(ticket.priority)}</span></td>
+                            <td>${formatRelativeTime(ticket.created_at)}</td>
+                            <td>
+                                <button onclick="viewTicket(${ticket.id})" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading tickets:', error);
+                // Use mock data
+                const tbody = document.getElementById('tickets-tbody');
+                tbody.innerHTML = mockTickets.map(ticket => `
+                    <tr>
+                        <td>#${ticket.id}</td>
+                        <td>${ticket.subject}</td>
+                        <td><span class="badge ${getStatusBadgeClass(ticket.status)}">${formatStatus(ticket.status)}</span></td>
+                        <td><span class="badge ${ticket.priority === 'high' ? 'badge-danger' : ticket.priority === 'medium' ? 'badge-warning' : 'badge-info'}">${formatStatus(ticket.priority)}</span></td>
+                        <td>${formatRelativeTime(ticket.created_at)}</td>
+                        <td>
+                            <button onclick="viewTicket(${ticket.id})" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function openNewTicketModal() {
+            document.getElementById('new-ticket-modal').classList.remove('hidden');
+        }
+
+        function closeNewTicketModal() {
+            document.getElementById('new-ticket-modal').classList.add('hidden');
+            document.getElementById('new-ticket-form').reset();
+        }
+
+        async function viewTicket(ticketId) {
+            try {
+                const response = await apiRequest(`/api/tickets/${ticketId}`);
+                if (response && response.success) {
+                    const ticket = response.ticket;
+                    const messages = response.messages;
+
+                    document.getElementById('ticket-detail-subject').textContent = ticket.subject;
+                    document.getElementById('ticket-detail-id').value = ticket.id;
+
+                    const messagesContainer = document.getElementById('ticket-detail-messages');
+                    messagesContainer.innerHTML = messages.map(msg => `
+                        <div class="card ${msg.is_admin ? 'bg-tertiary' : ''}">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <strong>${msg.username}</strong>
+                                    ${msg.is_admin ? '<span class="badge badge-info ml-2">Admin</span>' : ''}
+                                </div>
+                                <span class="text-xs text-secondary">${formatRelativeTime(msg.created_at)}</span>
+                            </div>
+                            <p class="text-secondary">${msg.message}</p>
+                        </div>
+                    `).join('');
+
+                    document.getElementById('ticket-detail-modal').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading ticket:', error);
+                showNotification('Failed to load ticket', 'error');
+            }
+        }
+
+        function closeTicketDetailModal() {
+            document.getElementById('ticket-detail-modal').classList.add('hidden');
+        }
+
+        document.getElementById('new-ticket-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const subject = document.getElementById('ticket-subject').value;
+            const message = document.getElementById('ticket-message').value;
+            const priority = document.getElementById('ticket-priority').value;
+
+            try {
+                const response = await apiRequest('/api/tickets', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        subject,
+                        message,
+                        priority
+                    })
+                });
+
+                if (response && response.success) {
+                    showNotification('Ticket created successfully!', 'success');
+                    closeNewTicketModal();
+                    loadTickets();
+                }
+            } catch (error) {
+                showNotification(error.message || 'Failed to create ticket', 'error');
+            }
+        });
+
+        document.getElementById('ticket-reply-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const ticketId = document.getElementById('ticket-detail-id').value;
+            const message = document.getElementById('ticket-reply-message').value;
+
+            try {
+                const response = await apiRequest(`/api/tickets/${ticketId}/messages`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        message
+                    })
+                });
+
+                if (response && response.success) {
+                    showNotification('Reply sent successfully!', 'success');
+                    document.getElementById('ticket-reply-message').value = '';
+                    viewTicket(ticketId);
+                }
+            } catch (error) {
+                showNotification(error.message || 'Failed to send reply', 'error');
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', loadTickets);
+    </script>
+</body>
+</html>
+

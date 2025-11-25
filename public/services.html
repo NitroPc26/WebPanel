@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services - SMM WebPanel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-primary text-primary">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>SMM WebPanel</h2>
+        </div>
+        <nav>
+            <a href="/dashboard.html" class="sidebar-item">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/orders.html" class="sidebar-item">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+            </a>
+            <a href="/services.html" class="sidebar-item active">
+                <i class="fas fa-list"></i>
+                <span>Services</span>
+            </a>
+            <a href="/store.html" class="sidebar-item">
+                <i class="fas fa-store"></i>
+                <span>Store</span>
+            </a>
+            <a href="/balance.html" class="sidebar-item">
+                <i class="fas fa-wallet"></i>
+                <span>Balance</span>
+            </a>
+            <a href="/tickets.html" class="sidebar-item">
+                <i class="fas fa-ticket-alt"></i>
+                <span>Support</span>
+            </a>
+            <a href="/customer-service.html" class="sidebar-item">
+                <i class="fas fa-headset"></i>
+                <span>Customer Service</span>
+            </a>
+            <a href="/profile.html" class="sidebar-item">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            <a href="#" onclick="logout(); return false;" class="sidebar-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button onclick="toggleSidebar()" class="mobile-menu-btn" style="display: none; position: fixed; top: 20px; left: 20px; z-index: 101; background: var(--primary-color); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; box-shadow: var(--shadow-lg);">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-3xl font-bold">Services</h1>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="form-label">Category</label>
+                    <select id="category-filter" class="form-input">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Search</label>
+                    <input type="text" id="search-input" class="form-input" placeholder="Search services...">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="loadServices()" class="btn btn-primary w-full">
+                        <i class="fas fa-search"></i>
+                        Search
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Services Grid -->
+        <div id="services-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Services will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Order Modal -->
+    <div id="order-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Create Order</h2>
+                <button onclick="closeOrderModal()" class="text-secondary hover:text-primary">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <form id="order-form" class="space-y-4">
+                <input type="hidden" id="order-service-id">
+                <div>
+                    <label class="form-label">Service</label>
+                    <input type="text" id="order-service-name" class="form-input" readonly>
+                </div>
+                <div>
+                    <label class="form-label">Link/Username</label>
+                    <input type="text" id="order-link" class="form-input" required placeholder="https://...">
+                </div>
+                <div>
+                    <label class="form-label">Quantity</label>
+                    <input type="number" id="order-quantity" class="form-input" required min="1">
+                    <p class="text-xs text-secondary mt-1">Min: <span id="min-qty">0</span>, Max: <span id="max-qty">0</span></p>
+                </div>
+                <div>
+                    <label class="form-label">Price per unit</label>
+                    <input type="text" id="order-price-unit" class="form-input" readonly>
+                </div>
+                <div>
+                    <label class="form-label">Total Price</label>
+                    <input type="text" id="order-total-price" class="form-input text-xl font-bold" readonly>
+                </div>
+                <div class="flex gap-4">
+                    <button type="submit" class="btn btn-primary flex-1">
+                        <i class="fas fa-check"></i>
+                        Create Order
+                    </button>
+                    <button type="button" onclick="closeOrderModal()" class="btn btn-secondary">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        // Mock data
+        const mockCategories = [
+            { id: 1, name: "Instagram" },
+            { id: 2, name: "YouTube" },
+            { id: 3, name: "Twitter" },
+            { id: 4, name: "TikTok" },
+            { id: 5, name: "Facebook" }
+        ];
+
+        const mockServices = [
+            { id: 1, name: "Instagram Followers", description: "High-quality real Instagram followers. Guaranteed delivery within 24-48 hours.", price: 0.015, min_quantity: 100, max_quantity: 100000, speed: "very_fast", category_id: 1 },
+            { id: 2, name: "Instagram Likes", description: "Real Instagram likes from active accounts. Instant start.", price: 0.002, min_quantity: 100, max_quantity: 50000, speed: "very_fast", category_id: 1 },
+            { id: 3, name: "YouTube Views", description: "High retention YouTube views. Safe and organic growth.", price: 0.005, min_quantity: 1000, max_quantity: 1000000, speed: "fast", category_id: 2 },
+            { id: 4, name: "YouTube Subscribers", description: "Real YouTube subscribers. No drop guarantee.", price: 0.045, min_quantity: 100, max_quantity: 10000, speed: "fast", category_id: 2 },
+            { id: 5, name: "Twitter Followers", description: "Active Twitter followers. Organic growth guaranteed.", price: 0.01, min_quantity: 100, max_quantity: 50000, speed: "very_fast", category_id: 3 },
+            { id: 6, name: "Twitter Retweets", description: "Real Twitter retweets from active accounts.", price: 0.003, min_quantity: 50, max_quantity: 10000, speed: "very_fast", category_id: 3 },
+            { id: 7, name: "TikTok Followers", description: "Real TikTok followers. Fast delivery guaranteed.", price: 0.012, min_quantity: 100, max_quantity: 100000, speed: "very_fast", category_id: 4 },
+            { id: 8, name: "TikTok Likes", description: "High-quality TikTok likes. Instant start.", price: 0.001, min_quantity: 100, max_quantity: 100000, speed: "very_fast", category_id: 4 },
+            { id: 9, name: "Facebook Page Likes", description: "Real Facebook page likes from active users.", price: 0.017, min_quantity: 100, max_quantity: 50000, speed: "fast", category_id: 5 },
+            { id: 10, name: "Facebook Post Likes", description: "Real Facebook post likes. Safe and organic.", price: 0.002, min_quantity: 50, max_quantity: 10000, speed: "very_fast", category_id: 5 }
+        ];
+
+        let categories = [];
+        let services = [];
+
+        async function loadCategories() {
+            try {
+                const response = await apiRequest('/api/categories');
+                if (response && response.success) {
+                    categories = response.categories;
+                    const select = document.getElementById('category-filter');
+                    select.innerHTML = '<option value="">All Categories</option>' +
+                        categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+                } else {
+                    // Use mock data
+                    categories = mockCategories;
+                    const select = document.getElementById('category-filter');
+                    select.innerHTML = '<option value="">All Categories</option>' +
+                        categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+                }
+            } catch (error) {
+                console.error('Error loading categories:', error);
+                // Use mock data
+                categories = mockCategories;
+                const select = document.getElementById('category-filter');
+                select.innerHTML = '<option value="">All Categories</option>' +
+                    categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+            }
+        }
+
+        async function loadServices() {
+            try {
+                const categoryId = document.getElementById('category-filter').value;
+                const search = document.getElementById('search-input').value;
+                
+                let url = '/api/services?limit=100';
+                if (categoryId) url += `&category_id=${categoryId}`;
+                if (search) url += `&search=${encodeURIComponent(search)}`;
+
+                const response = await apiRequest(url);
+                if (response && response.success) {
+                    services = response.services;
+                    renderServices();
+                } else {
+                    // Use mock data
+                    let filteredServices = [...mockServices];
+                    if (categoryId) {
+                        filteredServices = filteredServices.filter(s => s.category_id == categoryId);
+                    }
+                    if (search) {
+                        const searchLower = search.toLowerCase();
+                        filteredServices = filteredServices.filter(s => 
+                            s.name.toLowerCase().includes(searchLower) || 
+                            (s.description && s.description.toLowerCase().includes(searchLower))
+                        );
+                    }
+                    services = filteredServices;
+                    renderServices();
+                }
+            } catch (error) {
+                console.error('Error loading services:', error);
+                // Use mock data
+                let filteredServices = [...mockServices];
+                const categoryId = document.getElementById('category-filter').value;
+                const search = document.getElementById('search-input').value;
+                if (categoryId) {
+                    filteredServices = filteredServices.filter(s => s.category_id == categoryId);
+                }
+                if (search) {
+                    const searchLower = search.toLowerCase();
+                    filteredServices = filteredServices.filter(s => 
+                        s.name.toLowerCase().includes(searchLower) || 
+                        (s.description && s.description.toLowerCase().includes(searchLower))
+                    );
+                }
+                services = filteredServices;
+                renderServices();
+            }
+        }
+
+        function renderServices() {
+            const container = document.getElementById('services-container');
+            if (services.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center text-secondary">No services found</div>';
+                return;
+            }
+
+            container.innerHTML = services.map(service => `
+                <div class="card">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-bold">${service.name}</h3>
+                        <span class="badge ${service.speed === 'very_fast' ? 'badge-success' : 'badge-info'}">
+                            ${service.speed === 'very_fast' ? 'Very Fast' : 'Fast'}
+                        </span>
+                    </div>
+                    <p class="text-secondary text-sm mb-4">${service.description || 'No description available'}</p>
+                    <div class="mb-4">
+                        <div class="text-2xl font-bold mb-1">${formatCurrency(service.price)}</div>
+                        <div class="text-xs text-secondary">Min: ${service.min_quantity} | Max: ${service.max_quantity}</div>
+                    </div>
+                    <button onclick="openOrderModal(${service.id})" class="btn btn-primary w-full">
+                        <i class="fas fa-shopping-cart"></i>
+                        Order Now
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function openOrderModal(serviceId) {
+            const service = services.find(s => s.id === serviceId);
+            if (!service) return;
+
+            document.getElementById('order-service-id').value = service.id;
+            document.getElementById('order-service-name').value = service.name;
+            document.getElementById('min-qty').textContent = service.min_quantity;
+            document.getElementById('max-qty').textContent = service.max_quantity;
+            document.getElementById('order-quantity').min = service.min_quantity;
+            document.getElementById('order-quantity').max = service.max_quantity;
+            document.getElementById('order-quantity').value = service.min_quantity;
+            document.getElementById('order-price-unit').value = formatCurrency(service.price);
+            updateOrderTotal();
+
+            document.getElementById('order-modal').classList.remove('hidden');
+        }
+
+        function closeOrderModal() {
+            document.getElementById('order-modal').classList.add('hidden');
+            document.getElementById('order-form').reset();
+        }
+
+        function updateOrderTotal() {
+            const quantity = parseInt(document.getElementById('order-quantity').value) || 0;
+            const priceUnit = parseFloat(document.getElementById('order-price-unit').value.replace(/[^0-9.]/g, '')) || 0;
+            const total = quantity * priceUnit;
+            document.getElementById('order-total-price').value = formatCurrency(total);
+        }
+
+        document.getElementById('order-quantity').addEventListener('input', updateOrderTotal);
+
+        document.getElementById('order-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const serviceId = parseInt(document.getElementById('order-service-id').value);
+            const link = document.getElementById('order-link').value;
+            const quantity = parseInt(document.getElementById('order-quantity').value);
+
+            if (!validateURL(link)) {
+                showNotification('Please enter a valid URL', 'error');
+                return;
+            }
+
+            try {
+                const response = await apiRequest('/api/orders', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        service_id: serviceId,
+                        link: link,
+                        quantity: quantity
+                    })
+                });
+
+                if (response && response.success) {
+                    showNotification('Order created successfully!', 'success');
+                    closeOrderModal();
+                    // Optionally reload services or redirect to orders
+                    setTimeout(() => {
+                        window.location.href = '/orders.html';
+                    }, 1000);
+                }
+            } catch (error) {
+                showNotification(error.message || 'Failed to create order', 'error');
+            }
+        });
+
+        document.getElementById('search-input').addEventListener('input', debounce(loadServices, 500));
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+            loadServices();
+        });
+    </script>
+</body>
+</html>
+

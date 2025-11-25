@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - SMM WebPanel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-primary text-primary">
+    <div class="sidebar" id="sidebar">
+        <div class="p-6 border-b border-color">
+            <h2 class="text-xl font-bold">Admin Panel</h2>
+        </div>
+        <nav class="py-4">
+            <a href="/admin-dashboard.html" class="sidebar-item active">
+                <i class="fas fa-home w-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/admin-users.html" class="sidebar-item">
+                <i class="fas fa-users w-5"></i>
+                <span>Users</span>
+            </a>
+            <a href="/admin-settings.html" class="sidebar-item">
+                <i class="fas fa-cog w-5"></i>
+                <span>Settings</span>
+            </a>
+            <a href="/admin-logs.html" class="sidebar-item">
+                <i class="fas fa-file-alt w-5"></i>
+                <span>Logs</span>
+            </a>
+            <a href="#" onclick="logout(); return false;" class="sidebar-item">
+                <i class="fas fa-sign-out-alt w-5"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content" >
+        <h1 class="text-3xl font-bold mb-8">Admin Dashboard</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="stats-card">
+                <h3>Total Orders</h3>
+                <div class="value" id="total-orders">0</div>
+            </div>
+            <div class="stats-card" style="background: linear-gradient(135deg, #f59e0b, #f97316);">
+                <h3>Pending Orders</h3>
+                <div class="value" id="pending-orders">0</div>
+            </div>
+            <div class="stats-card" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <h3>Total Users</h3>
+                <div class="value" id="total-users">0</div>
+            </div>
+            <div class="stats-card" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                <h3>Total Revenue</h3>
+                <div class="value" id="total-revenue">$0</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 class="text-lg font-semibold mb-4">Recent Orders</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Client</th>
+                            <th>Service</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-orders-tbody">
+                        <tr><td colspan="6" class="text-center text-secondary">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        // Mock admin stats
+        const mockAdminStats = {
+            total_orders: 1247,
+            pending_orders: 23,
+            total_users: 156,
+            total_revenue: 45230.50
+        };
+
+        const mockAdminOrders = [
+            { id: 1001, client_username: "john_doe", service_name: "Instagram Followers", price: 15.99, status: "completed", created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString() },
+            { id: 1002, client_username: "jane_smith", service_name: "YouTube Views", price: 25.50, status: "processing", created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString() },
+            { id: 1003, client_username: "mike_wilson", service_name: "Twitter Followers", price: 19.99, status: "pending", created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
+            { id: 1004, client_username: "sarah_jones", service_name: "TikTok Likes", price: 12.99, status: "completed", created_at: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString() },
+            { id: 1005, client_username: "david_brown", service_name: "Facebook Page Likes", price: 8.50, status: "completed", created_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString() }
+        ];
+
+        async function loadDashboard() {
+            try {
+                const response = await apiRequest('/api/dashboard/stats');
+                if (response && response.success) {
+                    const stats = response.stats;
+                    document.getElementById('total-orders').textContent = stats.total_orders || 0;
+                    document.getElementById('pending-orders').textContent = stats.pending_orders || 0;
+                    document.getElementById('total-users').textContent = stats.total_users || 0;
+                    document.getElementById('total-revenue').textContent = formatCurrency(stats.total_revenue || 0);
+                } else {
+                    // Use mock data
+                    document.getElementById('total-orders').textContent = mockAdminStats.total_orders;
+                    document.getElementById('pending-orders').textContent = mockAdminStats.pending_orders;
+                    document.getElementById('total-users').textContent = mockAdminStats.total_users;
+                    document.getElementById('total-revenue').textContent = formatCurrency(mockAdminStats.total_revenue);
+                }
+
+                const ordersResponse = await apiRequest('/api/dashboard/recent-orders?limit=10');
+                if (ordersResponse && ordersResponse.success) {
+                    const orders = ordersResponse.orders;
+                    const tbody = document.getElementById('recent-orders-tbody');
+                    tbody.innerHTML = orders.map(order => `
+                        <tr>
+                            <td>#${order.id}</td>
+                            <td>${order.client_username || 'N/A'}</td>
+                            <td>${order.service_name}</td>
+                            <td>${formatCurrency(order.price)}</td>
+                            <td><span class="badge ${getStatusBadgeClass(order.status)}">${formatStatus(order.status)}</span></td>
+                            <td>${formatRelativeTime(order.created_at)}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    // Use mock data
+                    const tbody = document.getElementById('recent-orders-tbody');
+                    tbody.innerHTML = mockAdminOrders.map(order => `
+                        <tr>
+                            <td>#${order.id}</td>
+                            <td>${order.client_username || 'N/A'}</td>
+                            <td>${order.service_name}</td>
+                            <td>${formatCurrency(order.price)}</td>
+                            <td><span class="badge ${getStatusBadgeClass(order.status)}">${formatStatus(order.status)}</span></td>
+                            <td>${formatRelativeTime(order.created_at)}</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                // Use mock data
+                document.getElementById('total-orders').textContent = mockAdminStats.total_orders;
+                document.getElementById('pending-orders').textContent = mockAdminStats.pending_orders;
+                document.getElementById('total-users').textContent = mockAdminStats.total_users;
+                document.getElementById('total-revenue').textContent = formatCurrency(mockAdminStats.total_revenue);
+                
+                const tbody = document.getElementById('recent-orders-tbody');
+                tbody.innerHTML = mockAdminOrders.map(order => `
+                    <tr>
+                        <td>#${order.id}</td>
+                        <td>${order.client_username || 'N/A'}</td>
+                        <td>${order.service_name}</td>
+                        <td>${formatCurrency(order.price)}</td>
+                        <td><span class="badge ${getStatusBadgeClass(order.status)}">${formatStatus(order.status)}</span></td>
+                        <td>${formatRelativeTime(order.created_at)}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadDashboard);
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store - SMM WebPanel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-primary text-primary">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>SMM WebPanel</h2>
+        </div>
+        <nav>
+            <a href="/dashboard.html" class="sidebar-item">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/orders.html" class="sidebar-item">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+            </a>
+            <a href="/services.html" class="sidebar-item">
+                <i class="fas fa-list"></i>
+                <span>Services</span>
+            </a>
+            <a href="/store.html" class="sidebar-item active">
+                <i class="fas fa-store"></i>
+                <span>Store</span>
+            </a>
+            <a href="/balance.html" class="sidebar-item">
+                <i class="fas fa-wallet"></i>
+                <span>Balance</span>
+            </a>
+            <a href="/tickets.html" class="sidebar-item">
+                <i class="fas fa-ticket-alt"></i>
+                <span>Support</span>
+            </a>
+            <a href="/customer-service.html" class="sidebar-item">
+                <i class="fas fa-headset"></i>
+                <span>Customer Service</span>
+            </a>
+            <a href="/profile.html" class="sidebar-item">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
+            <a href="#" onclick="logout(); return false;" class="sidebar-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button onclick="toggleSidebar()" class="mobile-menu-btn" style="display: none; position: fixed; top: 20px; left: 20px; z-index: 101; background: var(--primary-color); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; box-shadow: var(--shadow-lg);">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="page-title">Store</h1>
+                    <p class="page-subtitle">Browse and purchase products, game accounts, and more</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="toggleView('grid')" id="view-grid" class="btn btn-secondary">
+                        <i class="fas fa-th"></i>
+                    </button>
+                    <button onclick="toggleView('list')" id="view-list" class="btn btn-secondary">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="form-label">Category</label>
+                    <select id="category-filter" class="form-input">
+                        <option value="">All Categories</option>
+                        <option value="game_accounts">Game Accounts</option>
+                        <option value="products">Products</option>
+                        <option value="gift_cards">Gift Cards</option>
+                        <option value="software">Software</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Price Range</label>
+                    <select id="price-filter" class="form-input">
+                        <option value="">All Prices</option>
+                        <option value="0-50">$0 - $50</option>
+                        <option value="50-100">$50 - $100</option>
+                        <option value="100-200">$100 - $200</option>
+                        <option value="200+">$200+</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Search</label>
+                    <input type="text" id="search-input" class="form-input" placeholder="Search products...">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="loadProducts()" class="btn btn-primary w-full">
+                        <i class="fas fa-search"></i>
+                        Filter
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Grid/List -->
+        <div id="products-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Products will be loaded here -->
+            <div class="col-span-full text-center text-secondary">
+                <div class="spinner mx-auto"></div>
+                <p class="mt-4">Loading products...</p>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="mt-6 flex justify-center gap-2"></div>
+    </div>
+
+    <!-- Product Detail Modal -->
+    <div id="product-modal" class="modal-overlay hidden">
+        <div class="modal" style="max-width: 600px;">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold" id="modal-product-name"></h2>
+                <button onclick="closeProductModal()" class="text-secondary hover:text-primary">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div id="modal-product-content">
+                <!-- Product details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Modal -->
+    <div id="purchase-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Purchase Product</h2>
+                <button onclick="closePurchaseModal()" class="text-secondary hover:text-primary">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <form id="purchase-form" class="space-y-4">
+                <input type="hidden" id="purchase-product-id">
+                <div>
+                    <label class="form-label">Product</label>
+                    <input type="text" id="purchase-product-name" class="form-input" readonly>
+                </div>
+                <div>
+                    <label class="form-label">Price</label>
+                    <input type="text" id="purchase-product-price" class="form-input text-xl font-bold" readonly>
+                </div>
+                <div>
+                    <label class="form-label">Your Balance</label>
+                    <input type="text" id="purchase-user-balance" class="form-input" readonly>
+                </div>
+                <div id="purchase-warning" class="hidden">
+                    <div class="bg-warning bg-opacity-20 border border-warning rounded-lg p-4">
+                        <p class="text-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Insufficient balance. Please add funds to your account.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <button type="submit" class="btn btn-primary flex-1">
+                        <i class="fas fa-shopping-cart"></i>
+                        Confirm Purchase
+                    </button>
+                    <button type="button" onclick="closePurchaseModal()" class="btn btn-secondary">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        let products = [];
+        let currentPage = 1;
+        let currentView = 'grid';
+        let userBalance = 0;
+
+        // Mock products data - Comprehensive product list
+        const mockProducts = [
+            // Game Accounts - Gaming themed images
+            {
+                id: 1,
+                name: "Fortnite Account - Premium Level 200+",
+                category: "game_accounts",
+                description: "Premium Fortnite account with rare skins, battle pass, and 5000+ V-Bucks",
+                price: 89.99,
+                stock: 5,
+                image: "https://thespike-strapi-cms.s3.us-east-1.amazonaws.com/can_you_merge_fortnite_accounts_c49a91d647.jpg",
+                details: "Username: FortnitePro2024\nPassword: SecurePass123\nEmail: fortnite@example.com"
+            },
+            {
+                id: 2,
+                name: "Call of Duty: Modern Warfare III Account",
+                category: "game_accounts",
+                description: "COD account with all weapons unlocked, prestige level 10, and rare camos",
+                price: 149.99,
+                stock: 2,
+                image: "https://cdn.gameseal.com/media/12/36/10/1683794971/041955851bf54a98aafb738ffbf86331.jpg",
+                details: "Username: CODPro2024\nPassword: SecurePass456\nEmail: cod@example.com"
+            },
+            {
+                id: 3,
+                name: "Valorant Account - Radiant Rank",
+                category: "game_accounts",
+                description: "High-ranked Valorant account with rare skins and all agents unlocked",
+                price: 199.99,
+                stock: 1,
+                image: "https://fossbytes.com/wp-content/uploads/2020/11/Valorant-Players-Can-Buy-Smurf-Accounts-For-Less-Than-5.jpg",
+                details: "Username: ValorantPro\nPassword: SecurePass321\nEmail: valorant@example.com"
+            },
+            {
+                id: 4,
+                name: "GTA V Online Account - Level 500+",
+                category: "game_accounts",
+                description: "GTA V Online account with billions, all properties, and rare vehicles",
+                price: 249.99,
+                stock: 3,
+                image: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&h=300&fit=crop",
+                details: "Username: GTAVPro2024\nPassword: SecurePass654\nEmail: gtav@example.com"
+            },
+            {
+                id: 5,
+                name: "Minecraft Java Edition Premium Account",
+                category: "game_accounts",
+                description: "Minecraft Java Edition account with full access and migration completed",
+                price: 29.99,
+                stock: 8,
+                image: "https://cdn-dynmedia-1.microsoft.com/is/image/microsoftassets/Minecraft_Adidas_DW_Trailer_Thumbnail_1920x1080",
+                details: "Username: MinecraftGamer\nPassword: SecurePass789\nEmail: minecraft@example.com"
+            },
+            {
+                id: 6,
+                name: "Apex Legends Account - Predator Rank",
+                category: "game_accounts",
+                description: "Apex Legends account with Predator rank, all legends unlocked, and rare skins",
+                price: 179.99,
+                stock: 4,
+                image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&h=300&fit=crop",
+                details: "Username: ApexPredator\nPassword: SecurePass111\nEmail: apex@example.com"
+            },
+            {
+                id: 7,
+                name: "League of Legends Account - Challenger Rank",
+                category: "game_accounts",
+                description: "LoL account with Challenger rank, all champions, and rare skins",
+                price: 299.99,
+                stock: 2,
+                image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&h=300&fit=crop",
+                details: "Username: LoLChallenger\nPassword: SecurePass222\nEmail: lol@example.com"
+            },
+            {
+                id: 8,
+                name: "Rocket League Account - Grand Champion Rank",
+                category: "game_accounts",
+                description: "Rocket League account with Grand Champion rank and rare items",
+                price: 79.99,
+                stock: 6,
+                image: "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400&h=300&fit=crop",
+                details: "Username: RocketGC\nPassword: SecurePass333\nEmail: rocket@example.com"
+            },
+            {
+                id: 9,
+                name: "Counter-Strike 2 Account - Global Elite",
+                category: "game_accounts",
+                description: "CS2 account with Global Elite rank and rare skins",
+                price: 129.99,
+                stock: 5,
+                image: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=300&fit=crop",
+                details: "Username: CSGOGlobal\nPassword: SecurePass444\nEmail: csgo@example.com"
+            },
+            {
+                id: 10,
+                name: "Overwatch 2 Account - Top 500 Rank",
+                category: "game_accounts",
+                description: "Overwatch 2 account with Top 500 rank and all heroes unlocked",
+                price: 159.99,
+                stock: 3,
+                image: "https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=400&h=300&fit=crop",
+                details: "Username: OWTop500\nPassword: SecurePass555\nEmail: overwatch@example.com"
+            },
+            // Physical Products
+            {
+                id: 11,
+                name: "Sony PlayStation 5 Digital Edition Console",
+                category: "products",
+                description: "Brand new PS5 Digital Edition console with controller and warranty",
+                price: 399.99,
+                stock: 3,
+                image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400&h=300&fit=crop"
+            },
+            {
+                id: 12,
+                name: "Nintendo Switch OLED Console - White",
+                category: "products",
+                description: "Nintendo Switch OLED model in white with Joy-Con controllers",
+                price: 349.99,
+                stock: 4,
+                image: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=400&h=300&fit=crop"
+            },
+            {
+                id: 13,
+                name: "Microsoft Xbox Series X Console - 1TB",
+                category: "products",
+                description: "Xbox Series X 1TB console with wireless controller",
+                price: 499.99,
+                stock: 2,
+                image: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=400&h=300&fit=crop"
+            },
+            {
+                id: 14,
+                name: "Logitech G Pro X Superlight Gaming Mouse",
+                category: "products",
+                description: "Professional gaming mouse with RGB lighting and high DPI sensor",
+                price: 79.99,
+                stock: 15,
+                image: "https://images.unsplash.com/photo-1527814050087-3793815479db?w=400&h=300&fit=crop"
+            },
+            {
+                id: 15,
+                name: "RGB Mechanical Gaming Keyboard - Cherry MX",
+                category: "products",
+                description: "RGB mechanical gaming keyboard with Cherry MX switches",
+                price: 129.99,
+                stock: 12,
+                image: "https://images.unsplash.com/photo-1541140532154-b024d705b90a?w=400&h=300&fit=crop"
+            },
+            {
+                id: 16,
+                name: "Wireless Gaming Headset - 7.1 Surround Sound",
+                category: "products",
+                description: "7.1 surround sound wireless gaming headset with noise cancellation",
+                price: 149.99,
+                stock: 10,
+                image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop"
+            },
+            {
+                id: 17,
+                name: "Ergonomic Gaming Chair with Lumbar Support",
+                category: "products",
+                description: "Ergonomic gaming chair with lumbar support and adjustable armrests",
+                price: 299.99,
+                stock: 8,
+                image: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400&h=300&fit=crop"
+            },
+            {
+                id: 18,
+                name: "27-inch 4K Gaming Monitor - 144Hz HDR",
+                category: "products",
+                description: "27-inch 4K gaming monitor with 144Hz refresh rate and HDR",
+                price: 399.99,
+                stock: 6,
+                image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400&h=300&fit=crop"
+            },
+            // Gift Cards - Card/money themed images
+            {
+                id: 19,
+                name: "Steam Digital Gift Card - $50 USD",
+                category: "gift_cards",
+                description: "Digital Steam gift card worth $50 USD. Instant delivery via email",
+                price: 50.00,
+                stock: 20,
+                image: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=400&h=300&fit=crop"
+            },
+            {
+                id: 20,
+                name: "Steam Digital Gift Card - $100 USD",
+                category: "gift_cards",
+                description: "Digital Steam gift card worth $100 USD. Instant delivery via email",
+                price: 100.00,
+                stock: 15,
+                image: "https://m.media-amazon.com/images/I/51O9d-tI-kL.jpg"
+            },
+            {
+                id: 21,
+                name: "Xbox Game Pass Ultimate - 12 Month Subscription",
+                category: "gift_cards",
+                description: "12 months Xbox Game Pass Ultimate subscription code",
+                price: 179.99,
+                stock: 15,
+                image: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=400&h=300&fit=crop"
+            },
+            {
+                id: 22,
+                name: "PlayStation Plus Essential - 12 Month Subscription",
+                category: "gift_cards",
+                description: "12 months PlayStation Plus subscription code",
+                price: 59.99,
+                stock: 18,
+                image: "https://images.g2a.com/1024x576/1x1x1/playstation-plus-card-365-days-psn-key-indonesia-i10000000249160/fb9bc729f66b4f01b677fd7a"
+            },
+            {
+                id: 23,
+                name: "Amazon Digital Gift Card - $100 USD",
+                category: "gift_cards",
+                description: "Amazon.com gift card worth $100 USD. Digital delivery",
+                price: 100.00,
+                stock: 25,
+                image: "https://www.carddelivery.com/_next/image?url=https%3A%2F%2Fgiftnix-product-images.s3.us-west-2.amazonaws.com%2Ficd%2F100-amazon-digital-gift-card-email-delivery-2x&w=384&q=75"
+            },
+            {
+                id: 24,
+                name: "Amazon Digital Gift Card - $50 USD",
+                category: "gift_cards",
+                description: "Amazon.com gift card worth $50 USD. Digital delivery",
+                price: 50.00,
+                stock: 30,
+                image: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=400&h=300&fit=crop"
+            },
+            {
+                id: 25,
+                name: "Apple iTunes Gift Card - $50 USD",
+                category: "gift_cards",
+                description: "iTunes gift card worth $50 USD. Digital code delivery",
+                price: 50.00,
+                stock: 20,
+                image: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=400&h=300&fit=crop"
+            },
+            {
+                id: 26,
+                name: "Google Play Gift Card - $50 USD",
+                category: "gift_cards",
+                description: "Google Play gift card worth $50 USD. Digital code delivery",
+                price: 50.00,
+                stock: 22,
+                image: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=400&h=300&fit=crop"
+            },
+            {
+                id: 27,
+                name: "Nintendo eShop Gift Card - $50 USD",
+                category: "gift_cards",
+                description: "Nintendo eShop gift card worth $50 USD. Digital code",
+                price: 50.00,
+                stock: 18,
+                image: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=400&h=300&fit=crop"
+            },
+            {
+                id: 28,
+                name: "Roblox Digital Gift Card - $25 USD",
+                category: "gift_cards",
+                description: "Roblox gift card worth $25 USD. Digital code delivery",
+                price: 25.00,
+                stock: 25,
+                image: "https://cdn5.mtcgame.com/Images/Product/30c459ff-edb2-496d-9f9d-92b85439ee36.jpg"
+            },
+            // Software - Computer/tech themed images
+            {
+                id: 29,
+                name: "Adobe Creative Cloud All Apps - 1 Year License",
+                category: "software",
+                description: "1-year Adobe Creative Cloud subscription with all apps included",
+                price: 599.99,
+                stock: 10,
+                image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=300&fit=crop"
+            },
+            {
+                id: 30,
+                name: "Microsoft Windows 11 Pro - Lifetime License Key",
+                category: "software",
+                description: "Genuine Windows 11 Pro license key. Lifetime activation",
+                price: 49.99,
+                stock: 30,
+                image: "https://i0.wp.com/officedigital.io/wp-content/uploads/2021/10/win11pro-officedigital-2021-e1740419646609.png?fit=996%2C999&ssl=1"
+            },
+            {
+                id: 31,
+                name: "Microsoft Office 2021 Home & Student - Lifetime License",
+                category: "software",
+                description: "Microsoft Office 2021 Home & Student license key. Lifetime activation",
+                price: 79.99,
+                stock: 25,
+                image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=300&fit=crop"
+            },
+            {
+                id: 32,
+                name: "Norton 360 Deluxe Antivirus - 1 Year Subscription",
+                category: "software",
+                description: "Norton 360 Deluxe 1-year subscription for 5 devices",
+                price: 39.99,
+                stock: 20,
+                image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=300&fit=crop"
+            },
+            {
+                id: 33,
+                name: "Premium VPN Service - 1 Year Subscription",
+                category: "software",
+                description: "Premium VPN service with unlimited bandwidth for 1 year",
+                price: 59.99,
+                stock: 15,
+                image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=300&fit=crop"
+            },
+            {
+                id: 34,
+                name: "AutoCAD 2024 Professional License Key",
+                category: "software",
+                description: "AutoCAD 2024 license key. Professional CAD software",
+                price: 199.99,
+                stock: 8,
+                image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=300&fit=crop"
+            },
+            // Other Products - Streaming/media themed images
+            {
+                id: 35,
+                name: "Discord Nitro - 1 Year Subscription",
+                category: "other",
+                description: "Discord Nitro subscription for 1 year with all premium features",
+                price: 99.99,
+                stock: 20,
+                image: "https://cdn1.epicgames.com/offer/5f3c898b2a3244af99e9900e015717f8/EGS_Discord_Nitro_2560x1440_withlogo_2560x1440-944994658df3b04d0c4940be832da19e_2560x1440-944994658df3b04d0c4940be832da19e"
+            },
+            {
+                id: 36,
+                name: "Spotify Premium - 1 Year Subscription",
+                category: "other",
+                description: "Spotify Premium subscription for 1 year. Ad-free music streaming",
+                price: 119.99,
+                stock: 18,
+                image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop"
+            },
+            {
+                id: 37,
+                name: "Netflix Premium Gift Card - 3 Month Subscription",
+                category: "other",
+                description: "Netflix gift card for 3 months premium subscription",
+                price: 45.99,
+                stock: 15,
+                image: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=400&h=300&fit=crop"
+            },
+            {
+                id: 38,
+                name: "YouTube Premium - 1 Year Subscription",
+                category: "other",
+                description: "YouTube Premium subscription for 1 year. Ad-free videos",
+                price: 139.99,
+                stock: 12,
+                image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=300&fit=crop"
+            }
+        ];
+
+        async function loadProducts(page = 1) {
+            currentPage = page;
+            const category = document.getElementById('category-filter').value;
+            const priceRange = document.getElementById('price-filter').value;
+            const search = document.getElementById('search-input').value;
+
+            // Use mock data instead of API call
+            let filteredProducts = [...mockProducts];
+
+            // Filter by category
+            if (category) {
+                filteredProducts = filteredProducts.filter(p => p.category === category);
+            }
+
+            // Filter by price range
+            if (priceRange) {
+                const [min, max] = priceRange === '200+' ? [200, Infinity] : priceRange.split('-').map(Number);
+                filteredProducts = filteredProducts.filter(p => p.price >= min && (max === Infinity || p.price <= max));
+            }
+
+            // Filter by search
+            if (search) {
+                const searchLower = search.toLowerCase();
+                filteredProducts = filteredProducts.filter(p => 
+                    p.name.toLowerCase().includes(searchLower) || 
+                    (p.description && p.description.toLowerCase().includes(searchLower))
+                );
+            }
+
+            // Pagination
+            const limit = 12;
+            const start = (page - 1) * limit;
+            const end = start + limit;
+            products = filteredProducts.slice(start, end);
+
+            renderProducts();
+
+            // Pagination info
+            const totalPages = Math.ceil(filteredProducts.length / limit);
+            renderPagination({
+                page: page,
+                pages: totalPages,
+                total: filteredProducts.length
+            });
+        }
+
+        function renderProducts() {
+            const container = document.getElementById('products-container');
+            
+            if (products.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center text-secondary py-12"><i class="fas fa-inbox text-5xl mb-4 opacity-30"></i><p>No products found</p></div>';
+                return;
+            }
+
+            if (currentView === 'grid') {
+                container.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
+                container.innerHTML = products.map((product, index) => `
+                    <div class="card hover:shadow-lg transition-shadow fade-in" style="animation-delay: ${index * 0.1}s">
+                        <div class="relative mb-4">
+                            ${product.image ? `
+                                <img src="${product.image}" alt="${product.name}" class="w-full h-48 object-cover rounded-lg">
+                            ` : `
+                                <div class="w-full h-48 bg-tertiary rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-image text-5xl text-secondary"></i>
+                                </div>
+                            `}
+                            <span class="absolute top-2 right-2 badge ${getCategoryBadgeClass(product.category)}">
+                                ${formatCategory(product.category)}
+                            </span>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">${product.name}</h3>
+                        <p class="text-secondary text-sm mb-4 line-clamp-2">${product.description || 'No description available'}</p>
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <div class="text-2xl font-bold text-primary">${formatCurrency(product.price)}</div>
+                                ${product.stock !== null ? `
+                                    <div class="text-xs text-secondary">Stock: ${product.stock}</div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="viewProduct(${product.id})" class="btn btn-secondary flex-1">
+                                <i class="fas fa-eye"></i>
+                                View
+                            </button>
+                            <button onclick="openPurchaseModal(${product.id})" class="btn btn-primary flex-1" ${product.stock === 0 ? 'disabled' : ''}>
+                                <i class="fas fa-shopping-cart"></i>
+                                Buy
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.className = 'space-y-4';
+                container.innerHTML = products.map((product, index) => `
+                    <div class="card hover:shadow-lg transition-shadow fade-in flex gap-4" style="animation-delay: ${index * 0.05}s">
+                        <div class="w-32 h-32 flex-shrink-0">
+                            ${product.image ? `
+                                <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover rounded-lg">
+                            ` : `
+                                <div class="w-full h-full bg-tertiary rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-image text-3xl text-secondary"></i>
+                                </div>
+                            `}
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-start justify-between mb-2">
+                                <div>
+                                    <h3 class="text-lg font-bold">${product.name}</h3>
+                                    <span class="badge ${getCategoryBadgeClass(product.category)}">
+                                        ${formatCategory(product.category)}
+                                    </span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold text-primary">${formatCurrency(product.price)}</div>
+                                    ${product.stock !== null ? `
+                                        <div class="text-xs text-secondary">Stock: ${product.stock}</div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            <p class="text-secondary text-sm mb-4">${product.description || 'No description available'}</p>
+                            <div class="flex gap-2">
+                                <button onclick="viewProduct(${product.id})" class="btn btn-secondary">
+                                    <i class="fas fa-eye"></i>
+                                    View Details
+                                </button>
+                                <button onclick="openPurchaseModal(${product.id})" class="btn btn-primary" ${product.stock === 0 ? 'disabled' : ''}>
+                                    <i class="fas fa-shopping-cart"></i>
+                                    Buy Now
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function renderPagination(pagination) {
+            const paginationEl = document.getElementById('pagination');
+            let paginationHTML = '';
+
+            if (pagination.page > 1) {
+                paginationHTML += `<button onclick="loadProducts(${pagination.page - 1})" class="btn btn-secondary">Previous</button>`;
+            }
+
+            paginationHTML += `<span class="px-4 py-2">Page ${pagination.page} of ${pagination.pages}</span>`;
+
+            if (pagination.page < pagination.pages) {
+                paginationHTML += `<button onclick="loadProducts(${pagination.page + 1})" class="btn btn-secondary">Next</button>`;
+            }
+
+            paginationEl.innerHTML = paginationHTML;
+        }
+
+        function toggleView(view) {
+            currentView = view;
+            document.getElementById('view-grid').classList.toggle('active', view === 'grid');
+            document.getElementById('view-list').classList.toggle('active', view === 'list');
+            renderProducts();
+        }
+
+        async function viewProduct(productId) {
+            // Use mock data
+            const product = mockProducts.find(p => p.id === productId);
+            if (!product) {
+                showNotification('Product not found', 'error');
+                return;
+            }
+
+            document.getElementById('modal-product-name').textContent = product.name;
+            document.getElementById('modal-product-content').innerHTML = `
+                <div class="space-y-4">
+                    ${product.image ? `
+                        <img src="${product.image}" alt="${product.name}" class="w-full h-64 object-cover rounded-lg">
+                    ` : ''}
+                    <div>
+                        <span class="badge ${getCategoryBadgeClass(product.category)}">
+                            ${formatCategory(product.category)}
+                        </span>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold mb-2">Description</h4>
+                        <p class="text-secondary">${product.description || 'No description available'}</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="font-semibold mb-2">Price</h4>
+                            <p class="text-2xl font-bold text-primary">${formatCurrency(product.price)}</p>
+                        </div>
+                        ${product.stock !== null ? `
+                            <div>
+                                <h4 class="font-semibold mb-2">Stock</h4>
+                                <p class="text-lg">${product.stock}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                    ${product.details ? `
+                        <div>
+                            <h4 class="font-semibold mb-2">Details</h4>
+                            <div class="bg-tertiary p-4 rounded-lg">
+                                <pre class="text-sm whitespace-pre-wrap">${product.details}</pre>
+                            </div>
+                        </div>
+                    ` : ''}
+                    <button onclick="openPurchaseModal(${product.id})" class="btn btn-primary w-full" ${product.stock === 0 ? 'disabled' : ''}>
+                        <i class="fas fa-shopping-cart"></i>
+                        Purchase Now
+                    </button>
+                </div>
+            `;
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        function closeProductModal() {
+            document.getElementById('product-modal').classList.add('hidden');
+        }
+
+        async function openPurchaseModal(productId) {
+            const product = mockProducts.find(p => p.id === productId) || products.find(p => p.id === productId);
+            if (!product) {
+                showNotification('Product not found', 'error');
+                return;
+            }
+
+            if (product.stock === 0) {
+                showNotification('This product is out of stock', 'error');
+                return;
+            }
+
+            // Use mock balance or try to load real balance
+            try {
+                const profileResponse = await apiRequest('/api/users/profile');
+                if (profileResponse && profileResponse.success) {
+                    userBalance = profileResponse.user.balance || 0;
+                } else {
+                    userBalance = 500.00; // Mock balance
+                }
+            } catch (error) {
+                userBalance = 500.00; // Mock balance
+            }
+
+            document.getElementById('purchase-product-id').value = product.id;
+            document.getElementById('purchase-product-name').value = product.name;
+            document.getElementById('purchase-product-price').value = formatCurrency(product.price);
+            document.getElementById('purchase-user-balance').value = formatCurrency(userBalance);
+
+            const warningEl = document.getElementById('purchase-warning');
+            if (userBalance < product.price) {
+                warningEl.classList.remove('hidden');
+            } else {
+                warningEl.classList.add('hidden');
+            }
+
+            document.getElementById('purchase-modal').classList.remove('hidden');
+        }
+
+        function closePurchaseModal() {
+            document.getElementById('purchase-modal').classList.add('hidden');
+        }
+
+        document.getElementById('purchase-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const productId = parseInt(document.getElementById('purchase-product-id').value);
+            const product = mockProducts.find(p => p.id === productId) || products.find(p => p.id === productId);
+
+            if (userBalance < product.price) {
+                showNotification('Insufficient balance. Please add funds to your account.', 'error');
+                setTimeout(() => {
+                    window.location.href = '/balance.html';
+                }, 2000);
+                return;
+            }
+
+            // Mock purchase - show success message
+            showNotification('Product purchased successfully! Check your orders page for details.', 'success');
+            closePurchaseModal();
+            
+            // Try to make real purchase if API is available
+            try {
+                const response = await apiRequest('/api/store/purchase', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        product_id: productId
+                    })
+                });
+                if (response && response.success) {
+                    loadProducts(currentPage);
+                    const profileResponse = await apiRequest('/api/users/profile');
+                    if (profileResponse && profileResponse.success) {
+                        userBalance = profileResponse.user.balance || 0;
+                    }
+                }
+            } catch (error) {
+                // If API fails, just show mock success
+                console.log('Using mock purchase');
+            }
+        });
+
+        function getCategoryBadgeClass(category) {
+            const categoryMap = {
+                'game_accounts': 'badge-info',
+                'products': 'badge-success',
+                'gift_cards': 'badge-warning',
+                'software': 'badge-primary',
+                'other': 'badge-secondary'
+            };
+            return categoryMap[category] || 'badge-secondary';
+        }
+
+        function formatCategory(category) {
+            return category.split('_').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        }
+
+        // Search debounced
+        document.getElementById('search-input').addEventListener('input', debounce(() => {
+            loadProducts(1);
+        }, 500));
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadProducts();
+            document.getElementById('view-grid').classList.add('active');
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs - SMM WebPanel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-primary text-primary">
+    <div class="sidebar" id="sidebar">
+        <div class="p-6 border-b border-color">
+            <h2 class="text-xl font-bold">Admin Panel</h2>
+        </div>
+        <nav class="py-4">
+            <a href="/admin-dashboard.html" class="sidebar-item">
+                <i class="fas fa-home w-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/admin-users.html" class="sidebar-item">
+                <i class="fas fa-users w-5"></i>
+                <span>Users</span>
+            </a>
+            <a href="/admin-settings.html" class="sidebar-item">
+                <i class="fas fa-cog w-5"></i>
+                <span>Settings</span>
+            </a>
+            <a href="/admin-logs.html" class="sidebar-item active">
+                <i class="fas fa-file-alt w-5"></i>
+                <span>Logs</span>
+            </a>
+            <a href="#" onclick="logout(); return false;" class="sidebar-item">
+                <i class="fas fa-sign-out-alt w-5"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content" >
+        <h1 class="text-3xl font-bold mb-8">System Logs</h1>
+
+        <div class="card mb-6">
+            <div class="flex gap-4">
+                <button onclick="showLoginLogs()" class="btn btn-primary" id="btn-login-logs">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login Logs
+                </button>
+                <button onclick="showApiLogs()" class="btn btn-secondary" id="btn-api-logs">
+                    <i class="fas fa-code"></i>
+                    API Logs
+                </button>
+                <button onclick="showOrderLogs()" class="btn btn-secondary" id="btn-order-logs">
+                    <i class="fas fa-shopping-cart"></i>
+                    Order Logs
+                </button>
+                <button onclick="exportOrders()" class="btn btn-success">
+                    <i class="fas fa-download"></i>
+                    Export Orders CSV
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div id="logs-container">
+                <div class="table-container">
+                    <table>
+                        <thead id="logs-thead">
+                            <tr>
+                                <th>ID</th>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>IP Address</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-tbody">
+                            <tr><td colspan="6" class="text-center text-secondary">Select a log type</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="logs-pagination" class="mt-6 flex justify-center gap-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        let currentLogType = 'login';
+        let currentPage = 1;
+
+        function showLoginLogs() {
+            currentLogType = 'login';
+            currentPage = 1;
+            document.getElementById('btn-login-logs').classList.remove('btn-secondary');
+            document.getElementById('btn-login-logs').classList.add('btn-primary');
+            document.getElementById('btn-api-logs').classList.remove('btn-primary');
+            document.getElementById('btn-api-logs').classList.add('btn-secondary');
+            document.getElementById('btn-order-logs').classList.remove('btn-primary');
+            document.getElementById('btn-order-logs').classList.add('btn-secondary');
+            loadLogs();
+        }
+
+        function showApiLogs() {
+            currentLogType = 'api';
+            currentPage = 1;
+            document.getElementById('btn-api-logs').classList.remove('btn-secondary');
+            document.getElementById('btn-api-logs').classList.add('btn-primary');
+            document.getElementById('btn-login-logs').classList.remove('btn-primary');
+            document.getElementById('btn-login-logs').classList.add('btn-secondary');
+            document.getElementById('btn-order-logs').classList.remove('btn-primary');
+            document.getElementById('btn-order-logs').classList.add('btn-secondary');
+            loadLogs();
+        }
+
+        function showOrderLogs() {
+            currentLogType = 'orders';
+            currentPage = 1;
+            document.getElementById('btn-order-logs').classList.remove('btn-secondary');
+            document.getElementById('btn-order-logs').classList.add('btn-primary');
+            document.getElementById('btn-login-logs').classList.remove('btn-primary');
+            document.getElementById('btn-login-logs').classList.add('btn-secondary');
+            document.getElementById('btn-api-logs').classList.remove('btn-primary');
+            document.getElementById('btn-api-logs').classList.add('btn-secondary');
+            loadLogs();
+        }
+
+        async function loadLogs() {
+            try {
+                let url = '';
+                if (currentLogType === 'login') {
+                    url = `/api/admin/logs/login?page=${currentPage}&limit=50`;
+                } else if (currentLogType === 'api') {
+                    url = `/api/admin/logs/api?page=${currentPage}&limit=50`;
+                } else {
+                    url = `/api/admin/logs/orders?page=${currentPage}&limit=50`;
+                }
+
+                const response = await apiRequest(url);
+                if (response && response.success) {
+                    const logs = currentLogType === 'orders' ? response.orders : response.logs;
+                    const thead = document.getElementById('logs-thead');
+                    const tbody = document.getElementById('logs-tbody');
+
+                    if (currentLogType === 'login') {
+                        thead.innerHTML = '<tr><th>ID</th><th>User</th><th>Email</th><th>IP Address</th><th>Status</th><th>Date</th></tr>';
+                        tbody.innerHTML = logs.map(log => `
+                            <tr>
+                                <td>#${log.id}</td>
+                                <td>${log.username || 'N/A'}</td>
+                                <td>${log.email}</td>
+                                <td>${log.ip_address}</td>
+                                <td><span class="badge ${log.status === 'success' ? 'badge-success' : 'badge-danger'}">${formatStatus(log.status)}</span></td>
+                                <td>${formatDate(log.created_at)}</td>
+                            </tr>
+                        `).join('');
+                    } else if (currentLogType === 'api') {
+                        thead.innerHTML = '<tr><th>ID</th><th>User</th><th>Endpoint</th><th>Method</th><th>IP Address</th><th>Status</th><th>Date</th></tr>';
+                        tbody.innerHTML = logs.map(log => `
+                            <tr>
+                                <td>#${log.id}</td>
+                                <td>${log.username || 'N/A'}</td>
+                                <td>${log.endpoint}</td>
+                                <td>${log.method}</td>
+                                <td>${log.ip_address}</td>
+                                <td>${log.status_code}</td>
+                                <td>${formatDate(log.created_at)}</td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        thead.innerHTML = '<tr><th>ID</th><th>Client</th><th>Service</th><th>Link</th><th>Quantity</th><th>Price</th><th>Status</th><th>Date</th></tr>';
+                        tbody.innerHTML = logs.map(order => `
+                            <tr>
+                                <td>#${order.id}</td>
+                                <td>${order.client_username || 'N/A'}</td>
+                                <td>${order.service_name}</td>
+                                <td class="max-w-xs truncate">${order.link}</td>
+                                <td>${order.quantity}</td>
+                                <td>${formatCurrency(order.price)}</td>
+                                <td><span class="badge ${getStatusBadgeClass(order.status)}">${formatStatus(order.status)}</span></td>
+                                <td>${formatDate(order.created_at)}</td>
+                            </tr>
+                        `).join('');
+                    }
+
+                    // Pagination
+                    if (response.pagination) {
+                        const pagination = response.pagination;
+                        const paginationEl = document.getElementById('logs-pagination');
+                        let paginationHTML = '';
+
+                        if (pagination.page > 1) {
+                            paginationHTML += `<button onclick="currentPage = ${pagination.page - 1}; loadLogs();" class="btn btn-secondary">Previous</button>`;
+                        }
+
+                        paginationHTML += `<span class="px-4 py-2">Page ${pagination.page} of ${pagination.pages}</span>`;
+
+                        if (pagination.page < pagination.pages) {
+                            paginationHTML += `<button onclick="currentPage = ${pagination.page + 1}; loadLogs();" class="btn btn-secondary">Next</button>`;
+                        }
+
+                        paginationEl.innerHTML = paginationHTML;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading logs:', error);
+                showNotification('Failed to load logs', 'error');
+            }
+        }
+
+        async function exportOrders() {
+            try {
+                const response = await fetch('/api/admin/export/orders', {
+                    headers: getAuthHeaders()
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `orders_${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    showNotification('Orders exported successfully', 'success');
+                } else {
+                    throw new Error('Export failed');
+                }
+            } catch (error) {
+                showNotification('Failed to export orders', 'error');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            showLoginLogs();
+        });
+    </script>
+</body>
+</html>
+

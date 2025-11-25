@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - SMM WebPanel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-primary text-primary min-h-screen flex items-center justify-center py-8">
+    <div class="w-full max-w-md p-6">
+        <div class="card">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold mb-2">Create Account</h1>
+                <p class="text-secondary">Sign up to get started</p>
+            </div>
+
+            <form id="registerForm" class="space-y-6">
+                <div>
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" id="username" name="username" class="form-input" required autocomplete="username" minlength="3" maxlength="50">
+                    <p class="text-xs text-secondary mt-1">3-50 characters, letters, numbers, and underscores only</p>
+                </div>
+
+                <div>
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" id="email" name="email" class="form-input" required autocomplete="email">
+                </div>
+
+                <div>
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" name="password" class="form-input" required autocomplete="new-password" minlength="6">
+                    <p class="text-xs text-secondary mt-1">كلمة المرور يجب أن تكون 6 أحرف على الأقل</p>
+                </div>
+
+                <div>
+                    <label for="confirmPassword" class="form-label">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" required autocomplete="new-password">
+                </div>
+
+                <div>
+                    <label for="referralCode" class="form-label">Referral Code (Optional)</label>
+                    <input type="text" id="referralCode" name="referralCode" class="form-input">
+                </div>
+
+                <div class="flex items-center">
+                    <input type="checkbox" id="terms" name="terms" class="mr-2" required>
+                    <label for="terms" class="text-sm text-secondary">
+                        I agree to the <a href="#" class="text-primary hover:underline">Terms of Service</a> and <a href="#" class="text-primary hover:underline">Privacy Policy</a>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full">
+                    <i class="fas fa-user-plus"></i>
+                    Create Account
+                </button>
+
+                <div class="text-center text-secondary">
+                    Already have an account? <a href="/login.html" class="text-primary hover:underline">Sign in</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        // Prevent auto-redirect on login/register pages
+        if (typeof checkAuth === 'function') {
+            const originalCheckAuth = checkAuth;
+            checkAuth = function() {
+                const currentPage = window.location.pathname;
+                if (currentPage === '/login.html' || currentPage === '/register.html') {
+                    return;
+                }
+                originalCheckAuth();
+            };
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const referralCode = document.getElementById('referralCode').value.trim() || null;
+            const terms = document.getElementById('terms').checked;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+
+            // Validation
+            if (!username || !email || !password || !confirmPassword) {
+                showNotification('Please fill in all required fields', 'error');
+                return;
+            }
+
+            if (username.length < 3 || username.length > 50) {
+                showNotification('Username must be between 3 and 50 characters', 'error');
+                return;
+            }
+
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                showNotification('Username can only contain letters, numbers, and underscores', 'error');
+                return;
+            }
+
+            if (!validateEmail(email)) {
+                showNotification('Please enter a valid email address', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showNotification('Password must be at least 6 characters', 'error');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showNotification('Passwords do not match', 'error');
+                return;
+            }
+
+            if (!terms) {
+                showNotification('You must agree to the terms and conditions', 'error');
+                return;
+            }
+
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="spinner spinner-sm"></div> Creating account...';
+
+            try {
+                const result = await register(username, email, password, referralCode);
+                
+                if (result && result.success) {
+                    showNotification('Registration successful! Redirecting...', 'success');
+                    
+                    // Redirect based on role
+                    setTimeout(() => {
+                        if (result.user && result.user.role === 'admin') {
+                            window.location.href = '/admin-dashboard.html';
+                        } else if (result.user && result.user.role === 'seller') {
+                            window.location.href = '/seller-orders.html';
+                        } else {
+                            window.location.href = '/dashboard.html';
+                        }
+                    }, 1000);
+                } else {
+                    throw new Error('Invalid response from server');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                const errorMessage = error.message || 'Registration failed. Please try again.';
+                showNotification(errorMessage, 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
+        });
+    </script>
+</body>
+</html>
+

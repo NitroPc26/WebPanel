@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - SMM WebPanel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-primary text-primary">
+    <div class="sidebar" id="sidebar">
+        <div class="p-6 border-b border-color">
+            <h2 class="text-xl font-bold">Admin Panel</h2>
+        </div>
+        <nav class="py-4">
+            <a href="/admin-dashboard.html" class="sidebar-item">
+                <i class="fas fa-home w-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/admin-users.html" class="sidebar-item active">
+                <i class="fas fa-users w-5"></i>
+                <span>Users</span>
+            </a>
+            <a href="/admin-settings.html" class="sidebar-item">
+                <i class="fas fa-cog w-5"></i>
+                <span>Settings</span>
+            </a>
+            <a href="/admin-logs.html" class="sidebar-item">
+                <i class="fas fa-file-alt w-5"></i>
+                <span>Logs</span>
+            </a>
+            <a href="#" onclick="logout(); return false;" class="sidebar-item">
+                <i class="fas fa-sign-out-alt w-5"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content" >
+        <h1 class="text-3xl font-bold mb-8">User Management</h1>
+
+        <div class="card mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="form-label">Role</label>
+                    <select id="role-filter" class="form-input">
+                        <option value="">All Roles</option>
+                        <option value="client">Client</option>
+                        <option value="seller">Seller</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Status</label>
+                    <select id="status-filter" class="form-input">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="banned">Banned</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Search</label>
+                    <input type="text" id="search-input" class="form-input" placeholder="Search users...">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="loadUsers()" class="btn btn-primary w-full">Filter</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-tbody">
+                        <tr><td colspan="7" class="text-center text-secondary">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="pagination" class="mt-6 flex justify-center gap-2"></div>
+        </div>
+    </div>
+
+    <!-- Adjust Balance Modal -->
+    <div id="balance-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Adjust Balance</h2>
+                <button onclick="closeBalanceModal()" class="text-secondary hover:text-primary">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <form id="balance-form" class="space-y-4">
+                <input type="hidden" id="balance-user-id">
+                <div>
+                    <label class="form-label">Type</label>
+                    <select id="balance-type" class="form-input" required>
+                        <option value="admin_add">Add Funds</option>
+                        <option value="admin_remove">Remove Funds</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Amount</label>
+                    <input type="number" id="balance-amount" class="form-input" required min="0.01" step="0.01">
+                </div>
+                <div>
+                    <label class="form-label">Description</label>
+                    <textarea id="balance-description" class="form-input" rows="3"></textarea>
+                </div>
+                <div class="flex gap-4">
+                    <button type="submit" class="btn btn-primary flex-1">Apply</button>
+                    <button type="button" onclick="closeBalanceModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        let currentPage = 1;
+
+        async function loadUsers(page = 1) {
+            currentPage = page;
+            const role = document.getElementById('role-filter').value;
+            const status = document.getElementById('status-filter').value;
+            const search = document.getElementById('search-input').value;
+
+            try {
+                let url = `/api/users?page=${page}&limit=20`;
+                if (role) url += `&role=${role}`;
+                if (status) url += `&status=${status}`;
+                if (search) url += `&search=${encodeURIComponent(search)}`;
+
+                const response = await apiRequest(url);
+                if (response && response.success) {
+                    const users = response.users;
+                    const tbody = document.getElementById('users-tbody');
+
+                    if (users.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary">No users found</td></tr>';
+                    } else {
+                        tbody.innerHTML = users.map(user => `
+                            <tr>
+                                <td>#${user.id}</td>
+                                <td>${user.username}</td>
+                                <td>${user.email}</td>
+                                <td><span class="badge badge-info">${formatStatus(user.role)}</span></td>
+                                <td>${formatCurrency(user.balance || 0)}</td>
+                                <td><span class="badge ${getStatusBadgeClass(user.status)}">${formatStatus(user.status)}</span></td>
+                                <td>
+                                    <button onclick="adjustBalance(${user.id})" class="btn btn-secondary btn-sm">
+                                        <i class="fas fa-wallet"></i>
+                                    </button>
+                                    <button onclick="toggleUserStatus(${user.id}, '${user.status}')" class="btn ${user.status === 'active' ? 'btn-danger' : 'btn-success'} btn-sm">
+                                        <i class="fas fa-${user.status === 'active' ? 'ban' : 'check'}"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+
+                    // Pagination
+                    if (response.pagination) {
+                        const pagination = response.pagination;
+                        const paginationEl = document.getElementById('pagination');
+                        let paginationHTML = '';
+
+                        if (pagination.page > 1) {
+                            paginationHTML += `<button onclick="loadUsers(${pagination.page - 1})" class="btn btn-secondary">Previous</button>`;
+                        }
+
+                        paginationHTML += `<span class="px-4 py-2">Page ${pagination.page} of ${pagination.pages}</span>`;
+
+                        if (pagination.page < pagination.pages) {
+                            paginationHTML += `<button onclick="loadUsers(${pagination.page + 1})" class="btn btn-secondary">Next</button>`;
+                        }
+
+                        paginationEl.innerHTML = paginationHTML;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showNotification('Failed to load users', 'error');
+            }
+        }
+
+        function adjustBalance(userId) {
+            document.getElementById('balance-user-id').value = userId;
+            document.getElementById('balance-modal').classList.remove('hidden');
+        }
+
+        function closeBalanceModal() {
+            document.getElementById('balance-modal').classList.add('hidden');
+            document.getElementById('balance-form').reset();
+        }
+
+        async function toggleUserStatus(userId, currentStatus) {
+            const newStatus = currentStatus === 'active' ? 'banned' : 'active';
+            const action = newStatus === 'banned' ? 'ban' : 'unban';
+
+            if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+
+            try {
+                const response = await apiRequest(`/api/users/${userId}/status`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (response && response.success) {
+                    showNotification(`User ${action}ned successfully`, 'success');
+                    loadUsers(currentPage);
+                }
+            } catch (error) {
+                showNotification(error.message || 'Failed to update user status', 'error');
+            }
+        }
+
+        document.getElementById('balance-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userId = document.getElementById('balance-user-id').value;
+            const type = document.getElementById('balance-type').value;
+            const amount = parseFloat(document.getElementById('balance-amount').value);
+            const description = document.getElementById('balance-description').value;
+
+            try {
+                const response = await apiRequest('/api/transactions/admin/adjust', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        user_id: parseInt(userId),
+                        type,
+                        amount,
+                        description
+                    })
+                });
+
+                if (response && response.success) {
+                    showNotification('Balance adjusted successfully', 'success');
+                    closeBalanceModal();
+                    loadUsers(currentPage);
+                }
+            } catch (error) {
+                showNotification(error.message || 'Failed to adjust balance', 'error');
+            }
+        });
+
+        document.getElementById('search-input').addEventListener('input', debounce(() => {
+            loadUsers(1);
+        }, 500));
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadUsers();
+        });
+    </script>
+</body>
+</html>
+

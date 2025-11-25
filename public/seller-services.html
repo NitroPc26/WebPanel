@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Services - SMM WebPanel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-primary text-primary">
+    <div class="sidebar" id="sidebar">
+        <div class="p-6 border-b border-color">
+            <h2 class="text-xl font-bold">SMM WebPanel</h2>
+        </div>
+        <nav class="py-4">
+            <a href="/seller-orders.html" class="sidebar-item">
+                <i class="fas fa-shopping-cart w-5"></i>
+                <span>Orders</span>
+            </a>
+            <a href="/seller-services.html" class="sidebar-item active">
+                <i class="fas fa-list w-5"></i>
+                <span>Services</span>
+            </a>
+            <a href="#" onclick="logout(); return false;" class="sidebar-item">
+                <i class="fas fa-sign-out-alt w-5"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content" >
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-3xl font-bold">Service Management</h1>
+            <button onclick="openServiceModal()" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Add Service
+            </button>
+        </div>
+
+        <div class="card">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Reseller Price</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="services-tbody">
+                        <tr><td colspan="7" class="text-center text-secondary">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Modal -->
+    <div id="service-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold" id="modal-title">Add Service</h2>
+                <button onclick="closeServiceModal()" class="text-secondary hover:text-primary">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <form id="service-form" class="space-y-4">
+                <input type="hidden" id="service-id">
+                <div>
+                    <label class="form-label">Category</label>
+                    <select id="service-category" class="form-input" required></select>
+                </div>
+                <div>
+                    <label class="form-label">Service Name</label>
+                    <input type="text" id="service-name" class="form-input" required>
+                </div>
+                <div>
+                    <label class="form-label">Description</label>
+                    <textarea id="service-description" class="form-input" rows="3"></textarea>
+                </div>
+                <div>
+                    <label class="form-label">Price</label>
+                    <input type="number" id="service-price" class="form-input" required step="0.0001" min="0">
+                </div>
+                <div>
+                    <label class="form-label">Reseller Price</label>
+                    <input type="number" id="service-reseller-price" class="form-input" required step="0.0001" min="0">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">Min Quantity</label>
+                        <input type="number" id="service-min-qty" class="form-input" required min="1">
+                    </div>
+                    <div>
+                        <label class="form-label">Max Quantity</label>
+                        <input type="number" id="service-max-qty" class="form-input" required min="1">
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label">Speed</label>
+                    <select id="service-speed" class="form-input">
+                        <option value="fast">Fast</option>
+                        <option value="very_fast">Very Fast</option>
+                    </select>
+                </div>
+                <div class="flex gap-4">
+                    <button type="submit" class="btn btn-primary flex-1">Save</button>
+                    <button type="button" onclick="closeServiceModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/utils.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/common.js"></script>
+    <script>
+        let categories = [];
+
+        async function loadCategories() {
+            try {
+                const response = await apiRequest('/api/categories');
+                if (response && response.success) {
+                    categories = response.categories;
+                    const select = document.getElementById('service-category');
+                    select.innerHTML = categories.map(cat => 
+                        `<option value="${cat.id}">${cat.name}</option>`
+                    ).join('');
+                }
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        async function loadServices() {
+            try {
+                const response = await apiRequest('/api/services?limit=100');
+                if (response && response.success) {
+                    const services = response.services;
+                    const tbody = document.getElementById('services-tbody');
+
+                    if (services.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary">No services found</td></tr>';
+                    } else {
+                        tbody.innerHTML = services.map(service => `
+                            <tr>
+                                <td>#${service.id}</td>
+                                <td>${service.name}</td>
+                                <td>${service.category_name || 'N/A'}</td>
+                                <td>${formatCurrency(service.price)}</td>
+                                <td>${formatCurrency(service.reseller_price || service.price)}</td>
+                                <td><span class="badge ${service.status === 'active' ? 'badge-success' : 'badge-pending'}">${formatStatus(service.status)}</span></td>
+                                <td>
+                                    <button onclick="editService(${service.id})" class="btn btn-secondary btn-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="deleteService(${service.id})" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading services:', error);
+                showNotification('Failed to load services', 'error');
+            }
+        }
+
+        function openServiceModal() {
+            document.getElementById('modal-title').textContent = 'Add Service';
+            document.getElementById('service-form').reset();
+            document.getElementById('service-id').value = '';
+            document.getElementById('service-modal').classList.remove('hidden');
+        }
+
+        function closeServiceModal() {
+            document.getElementById('service-modal').classList.add('hidden');
+        }
+
+        async function editService(serviceId) {
+            try {
+                const response = await apiRequest(`/api/services/${serviceId}`);
+                if (response && response.success) {
+                    const service = response.service;
+                    document.getElementById('modal-title').textContent = 'Edit Service';
+                    document.getElementById('service-id').value = service.id;
+                    document.getElementById('service-category').value = service.category_id;
+                    document.getElementById('service-name').value = service.name;
+                    document.getElementById('service-description').value = service.description || '';
+                    document.getElementById('service-price').value = service.price;
+                    document.getElementById('service-reseller-price').value = service.reseller_price || service.price;
+                    document.getElementById('service-min-qty').value = service.min_quantity;
+                    document.getElementById('service-max-qty').value = service.max_quantity;
+                    document.getElementById('service-speed').value = service.speed;
+                    document.getElementById('service-modal').classList.remove('hidden');
+                }
+            } catch (error) {
+                showNotification('Failed to load service', 'error');
+            }
+        }
+
+        async function deleteService(serviceId) {
+            if (!confirm('Are you sure you want to delete this service?')) return;
+            try {
+                const response = await apiRequest(`/api/services/${serviceId}`, { method: 'DELETE' });
+                if (response && response.success) {
+                    showNotification('Service deleted successfully', 'success');
+                    loadServices();
+                }
+            } catch (error) {
+                showNotification(error.message || 'Failed to delete service', 'error');
+            }
+        }
+
+        document.getElementById('service-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const serviceId = document.getElementById('service-id').value;
+            const isEdit = serviceId !== '';
+
+            const data = {
+                category_id: parseInt(document.getElementById('service-category').value),
+                name: document.getElementById('service-name').value,
+                description: document.getElementById('service-description').value,
+                price: parseFloat(document.getElementById('service-price').value),
+                reseller_price: parseFloat(document.getElementById('service-reseller-price').value),
+                min_quantity: parseInt(document.getElementById('service-min-qty').value),
+                max_quantity: parseInt(document.getElementById('service-max-qty').value),
+                speed: document.getElementById('service-speed').value,
+                status: 'active'
+            };
+
+            try {
+                const url = isEdit ? `/api/services/${serviceId}` : '/api/services';
+                const method = isEdit ? 'PUT' : 'POST';
+                const response = await apiRequest(url, {
+                    method,
+                    body: JSON.stringify(data)
+                });
+
+                if (response && response.success) {
+                    showNotification(`Service ${isEdit ? 'updated' : 'created'} successfully!`, 'success');
+                    closeServiceModal();
+                    loadServices();
+                }
+            } catch (error) {
+                showNotification(error.message || 'Failed to save service', 'error');
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+            loadServices();
+        });
+    </script>
+</body>
+</html>
+
