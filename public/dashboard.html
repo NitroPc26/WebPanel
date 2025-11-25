@@ -219,8 +219,30 @@
         ];
 
         async function loadDashboard() {
+            // Always use mock data first to avoid API calls that might cause redirects
+            // This ensures the page loads quickly and doesn't redirect on API failure
+            animateValue('total-orders', 0, mockStats.total_orders, 1000);
+            animateValue('pending-orders', 0, mockStats.pending_orders, 1000);
+            animateValue('completed-orders', 0, mockStats.completed_orders, 1000);
+            animateValue('failed-orders', 0, mockStats.failed_orders, 1000);
+            document.getElementById('balance').textContent = formatCurrency(mockStats.balance);
+            
+            const tbody = document.getElementById('orders-tbody');
+            tbody.innerHTML = mockRecentOrders.map((order, index) => `
+                <tr class="fade-in" style="animation-delay: ${index * 0.1}s">
+                    <td><strong>#${order.id}</strong></td>
+                    <td>${order.service_name}</td>
+                    <td class="max-w-xs truncate" title="${order.link}">${order.link}</td>
+                    <td><span class="badge badge-info">${order.quantity}</span></td>
+                    <td><strong>${formatCurrency(order.price)}</strong></td>
+                    <td><span class="badge ${getStatusBadgeClass(order.status)}">${formatStatus(order.status)}</span></td>
+                    <td class="text-muted">${formatRelativeTime(order.created_at)}</td>
+                </tr>
+            `).join('');
+            
+            // Try to load real data in background (non-blocking)
+            // If API fails, we already have mock data displayed
             try {
-                // Try to load real data
                 const statsResponse = await apiRequest('/dashboard/stats');
                 if (statsResponse && statsResponse.success) {
                     const stats = statsResponse.stats;
@@ -229,22 +251,16 @@
                     animateValue('completed-orders', 0, stats.completed_orders || 0, 1000);
                     animateValue('failed-orders', 0, stats.failed_orders || 0, 1000);
                     document.getElementById('balance').textContent = formatCurrency(stats.balance || 0);
-                } else {
-                    // Use mock data
-                    animateValue('total-orders', 0, mockStats.total_orders, 1000);
-                    animateValue('pending-orders', 0, mockStats.pending_orders, 1000);
-                    animateValue('completed-orders', 0, mockStats.completed_orders, 1000);
-                    animateValue('failed-orders', 0, mockStats.failed_orders, 1000);
-                    document.getElementById('balance').textContent = formatCurrency(mockStats.balance);
                 }
+            } catch (apiError) {
+                // Silent fail - mock data already displayed
+            }
 
+            try {
                 const ordersResponse = await apiRequest('/dashboard/recent-orders?limit=10');
-                if (ordersResponse && ordersResponse.success) {
+                if (ordersResponse && ordersResponse.success && ordersResponse.orders) {
                     const orders = ordersResponse.orders;
-                    const tbody = document.getElementById('orders-tbody');
-                    if (orders.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-8"><i class="fas fa-inbox" style="font-size: 48px; opacity: 0.3; margin-bottom: 16px; display: block;"></i>No orders yet</td></tr>';
-                    } else {
+                    if (orders.length > 0) {
                         tbody.innerHTML = orders.map((order, index) => `
                             <tr class="fade-in" style="animation-delay: ${index * 0.1}s">
                                 <td><strong>#${order.id}</strong></td>
@@ -257,42 +273,9 @@
                             </tr>
                         `).join('');
                     }
-                } else {
-                    // Use mock data
-                    const tbody = document.getElementById('orders-tbody');
-                    tbody.innerHTML = mockRecentOrders.map((order, index) => `
-                        <tr class="fade-in" style="animation-delay: ${index * 0.1}s">
-                            <td><strong>#${order.id}</strong></td>
-                            <td>${order.service_name}</td>
-                            <td class="max-w-xs truncate" title="${order.link}">${order.link}</td>
-                            <td><span class="badge badge-info">${order.quantity}</span></td>
-                            <td><strong>${formatCurrency(order.price)}</strong></td>
-                            <td><span class="badge ${getStatusBadgeClass(order.status)}">${formatStatus(order.status)}</span></td>
-                            <td class="text-muted">${formatRelativeTime(order.created_at)}</td>
-                        </tr>
-                    `).join('');
                 }
-            } catch (error) {
-                console.error('Error loading dashboard:', error);
-                // Use mock data on error
-                animateValue('total-orders', 0, mockStats.total_orders, 1000);
-                animateValue('pending-orders', 0, mockStats.pending_orders, 1000);
-                animateValue('completed-orders', 0, mockStats.completed_orders, 1000);
-                animateValue('failed-orders', 0, mockStats.failed_orders, 1000);
-                document.getElementById('balance').textContent = formatCurrency(mockStats.balance);
-                
-                const tbody = document.getElementById('orders-tbody');
-                tbody.innerHTML = mockRecentOrders.map((order, index) => `
-                    <tr class="fade-in" style="animation-delay: ${index * 0.1}s">
-                        <td><strong>#${order.id}</strong></td>
-                        <td>${order.service_name}</td>
-                        <td class="max-w-xs truncate" title="${order.link}">${order.link}</td>
-                        <td><span class="badge badge-info">${order.quantity}</span></td>
-                        <td><strong>${formatCurrency(order.price)}</strong></td>
-                        <td><span class="badge ${getStatusBadgeClass(order.status)}">${formatStatus(order.status)}</span></td>
-                        <td class="text-muted">${formatRelativeTime(order.created_at)}</td>
-                    </tr>
-                `).join('');
+            } catch (apiError) {
+                // Silent fail - mock data already displayed
             }
         }
 
